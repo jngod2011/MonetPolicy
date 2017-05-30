@@ -1,0 +1,161 @@
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % 													% % % % % % % %
+% % % % % % % % 			von Krosigk Master Thesis				% % % % % % % %
+% % % % % % % % 													% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 			Präambel			% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+% Allgemein und Schriftbild
+\documentclass[%	scrrprt, falls headings und typearea verwendet werden sollen, appendixprefix als Option
+a4paper, 12pt, DIV=calc, BCOR5mm,abstracton]{scrartcl}
+%\usepackage[left=4cm, right=2cm, top=3cm, bottom=1.5cm]{geometry}		% alt: 3.04cm, 2.54cm, 2.5cm, 2cm
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[UKenglish]{babel}
+\usepackage{lmodern}									% Schriftart "Latin Modern"
+\usepackage[absolute]{textpos} 							% for address on title page
+
+\usepackage{booktabs}									% Tabellen \toprule, \bottomrule
+\usepackage{graphicx}
+%\usepackage{enumitem}									% Weniger Abstand bei Aufzählungen
+%\usepackage{array}										% \compress Spaltenweise
+\usepackage{paralist}									% Kleinerer Abstand enumerate
+
+\usepackage{setspace}
+%\AfterTOCHead{\singlespacing}
+%\pagestyle{headings}
+\onehalfspacing
+\typearea[current]{calc}
+%\KOMAoptions{DIV=last}
+%\usepackage{nomencl}									% Abkürzungsverzeichnis
+
+% Mathe
+\usepackage{amsmath}									% für mathematische Ausdrücke
+\usepackage{amssymb}									% für diverse Symbole
+%\usepackage{nicefrac}
+%\usepackage{chngcntr}									% Gleichgungen durchlaufend nummerieren
+%\counterwithout{equation}{chapter}						% Referenzierungen stimmen aber noch nicht
+%\usepackage{tikz} 										% Zur Erstellung von Koordinatensystem
+\usepackage{tikzsymbols}								% Smileys
+%\usetikzlibrary{shapes.misc,arrows} 					% für \node Befehl
+
+% Quellcode
+%\usepackage{xcolor}										% Option [table,grey] verwenden?
+%\usepackage[scaled=0.78]{luximono}
+%\usepackage{listings}
+
+% Literatur
+%\usepackage[babel,=british]{csquotes} 
+\usepackage[backend=bibtex,style=authoryear-icomp, dashed=false]{biblatex}
+\bibliography{Literature}
+
+% Referenzierungen
+\usepackage[english]{varioref}
+\usepackage[hidelinks]{hyperref}
+
+% Author
+\title{Anticipation of Monetary Policy Decisions of Central Banks}
+\author{Manuel von Krosigk (40888)\footnote{\href{mailto:40888@student.hhs.se.}{40888@student.hhs.se.}}}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 			Funktionen			% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+%\newtheorem{hypothesis}{Hypothesis}
+%\renewcommand{\thesection}{\arabic{section}.}
+%\makeatletter
+%\newcommand*{\compress}{\@minipagetrue}						% kleinerer Abstand itemize
+%\makeatother
+\newcounter{SeitenzahlSpeicher}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 			Beginn				% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\begin{document}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 			Titelseite			% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\thispagestyle{empty}
+\input{coverpage/coverpage_SSE}
+\newpage
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 		Inhaltsverzeichnis		% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+	
+\pagenumbering{Roman}
+\renewcommand{\baselinestretch}{1.08}\normalsize % make font smaller
+\tableofcontents
+\renewcommand{\baselinestretch}{1.0}\onehalfspacing
+%\chapter*{List of Abbreviations} \addcontentsline{toc}{chapter}{List of Abbreviations}
+%\input{Kapitel/02_Abbreviations}
+\clearpage
+\listoffigures  \addcontentsline{toc}{section}{List of Figures} 
+\listoftables \addcontentsline{toc}{section}{List of Tables}
+
+
+\clearpage
+\setcounter{SeitenzahlSpeicher}{\value{page}}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 			Text				% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\pagenumbering{arabic}
+
+\section{Introduction} \label{ch:Intro}
+\dots%\input{chapters/01_Intro}
+
+\section{Literature Review} \label{ch:Lit}
+\dots%\input{chapters/02_Baseline}
+
+\section{Model} \label{ch:Mdl}
+\dots%\input{chapters/03_Shock}
+
+\section{Results} \label{ch:Res}
+\dots%\input{chapters/04_Matlab}
+
+\section{Discussion} \label{ch:Disc}
+\dots%\input{chapters/05_Results}
+
+\section{Conclusion} \label{ch:Conc}
+\dots%\input{chapters/06_Conclusion}
+
+	
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 			Anhang				% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %	
+
+\clearpage
+\pagenumbering{Roman}
+\setcounter{page}{\theSeitenzahlSpeicher}
+\appendix
+
+%\section{Appendix}
+%\input{chapters/07_Appendix}
+
+	
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % % 			Literatur			% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %	
+\addcontentsline{toc}{section}{Bibliography}
+\newpage
+\printbibliography 
+%
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% % % % % %		Selbständigkeitserklärung	% % % % % % % %
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%
+%\chapter*{Declaration of autonomous work} \addcontentsline{toc}{chapter}{Declaration of autonomous work}
+%\input{Kapitel/09_Declaration}
+%
+\end{document}
