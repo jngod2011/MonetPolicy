@@ -7,6 +7,12 @@
 
 # rm(list=ls())
 # setwd("C:/Users/Admin/Google Drive/Masterthesis")
+# install.packages(c("httr", "XML"), repos = "http://cran.us.r-project.org")
+library(stargazer)
+library(xtable)
+#library(httr)
+#library(XML)
+library(xlsx)
 
 # Read YC Data ------------------------------------------------------------
 
@@ -44,6 +50,7 @@ YCGT                    <- YCGT[which(
 # Read Target Interest Rate -----------------------------------------------
 
 # Source: https://www.federalreserve.gov/monetarypolicy/openmarket.htm
+# Source: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
 # Source: https://www.investing.com/economic-calendar/interest-rate-decision-168
 # Source: http://www.tradingeconomics.com/united-states/interest-rate
 
@@ -86,7 +93,23 @@ lines(Rates[,1],Rates[,3], col='cornflowerblue')
 
 # add decisions where nothing was changed for analysis!
 
+# FOMC Dates - Full History Web Scrape ------------------------------------
 
+# https://www.r-bloggers.com/fomc-dates-full-history-web-scrape/
+# http://www.returnandrisk.com/2014/11/scraping-data-from-web-pages-fomc-dates.html
+# funcions: https://github.com/returnandrisk/r-code/blob/master/FOMC%20Dates%20Functions.R
+
+# read table from Excel and export to LaTeX
+OMO_dates     <- read.xlsx("data/FED_OpenMarket_Operations.xlsx", sheetName = "OMOs")
+# issue with dates an xtable, fix:
+#xtable <- function(x, ...) {
+#  for (i in which(sapply(x, function(y) !all(is.na(match(c("POSIXt","Date"),
+#        class(y))))))) x[[i]] <- as.character(x[[i]])
+#        xtable::xtable(x, ...)
+#}
+#print(xtable(as.data.frame(OMO_dates[,c(1,3:16)]), caption="Federal Funds Targets.", 
+#             label = "tab:OMOs", align="rrrrrrrrrrrrrrrr", floating=TRUE,
+#             digits=c(0,0,4,4,4,4,3,3,3,3,3,3,3,3,3,3)), booktabs=TRUE, caption.placement="top")
 
 
 ####################################################
