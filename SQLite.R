@@ -8,7 +8,6 @@ library("XLConnect")
 
 setwd("E:/20170421_MA_Data/reuters")
 
-
 # Connect to database -----------------------------------------------------
 
 #db <- dbConnect(drv="SQLite", dbname="reuters.db")
@@ -26,12 +25,27 @@ alltables = dbListTables(db)
 #dbGetQuery(db, "SELECT content, title FROM Articles WHERE pub_datetime = BETWEEN date(
 #             '2015-01-03') AND date('2015-01-04') # doesn't work yet
 
-test1 <- dbGetQuery(db, "SELECT content, title FROM Articles WHERE 
-                    pub_datetime < datetime('2015-01-03 23:51:00','-1 day')")
+#test1 <- dbGetQuery(db, "SELECT content, title FROM Articles WHERE 
+#                    pub_datetime < datetime('2015-01-03 23:51:00','-1 day')")
+
 # alternative for later: determine ids with elastic and reference accordingly
 
+# 2008 and before no data \dots
+
+# restrict to a few articles to make analysis feasible
+OMO_20151217 <- dbGetQuery(db, "SELECT content, title, pub_datetime FROM Articles WHERE 
+                    pub_datetime BETWEEN datetime('2015-12-17 14:00:00','-5 day') 
+                    AND datetime('2015-12-17 14:00:00','+5 day')")
+setwd("C:/Users/Admin/Google Drive/Masterthesis")
+save(OMO_20151217,file="OMO_20151217.RData")
 
 # Manipulate for TA -------------------------------------------------------
+
+setwd("C:/Users/Admin/Google Drive/Masterthesis")
+load("OMO_20151217.RData")
+min(OMO_20151217[,3]) # first article
+max(OMO_20151217[,3]) # last article 
+
 
 
 # General Queries ---------------------------------------------------------
