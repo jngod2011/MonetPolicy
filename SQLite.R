@@ -50,7 +50,7 @@ library(tm)
 # maybe smoother with "DirSource(directory = "texts/",encoding ="latin1" )"
 title   <- Corpus(VectorSource(OMO_20151217[,2])) 
 content <- Corpus(VectorSource(OMO_20151217[,1])) 
-summary(content)[1:10,]
+#summary(content)[1:10,]
 
 # inspect(title)
 writeLines(as.character(title[[23]])) # example
@@ -63,9 +63,13 @@ all(textcat(content)=="english") # everything in english?
 # part of speech tagging, see Schweinberger(2016)
 
 # create the toSpace content transformer
-toSpace <- content_transformer(function(x, pattern) {
+toSpace <- content_transformer(
+            function(x, pattern){
               return (gsub(pattern, " ", x))
-              })
+            })
+
+# transform to lower case (need to wrap in content_transformer)
+content <- tm_map(content, content_transformer(tolower))
 
 # eliminate non-text elements
 content <- tm_map(content, toSpace, "-") 
@@ -79,22 +83,6 @@ content <- tm_map(content, toSpace, "/")
 content <- tm_map(content, removePunctuation)
 # strip digits (std transformation, so no need for content_transformer)
 content <- tm_map(content, removeNumbers) # numbers needed?
-# transform to lower case (need to wrap in content_transformer)
-content <- tm_map(content, content_transformer(tolower))
-
-# remove stopwords using the standard list in tm package
-# remove them after part of speech tagging?
-
-stpw1  <- stopwords('english')
-stpw2  <- c("ths","th","st","rd","s","will","whose","wants","going") # own stop words
-comn  <- unique(c(stpw1,stpw2)) # select unique stopwords
-stopwords <- unique(c(gsub("'","",comn),comn)) # final stop word list
-content <- tm_map(content, removeWords, stopwords("english"))
-
-# some weird concatenated words like "accommodativeyellen"
-
-# strip whitespace only cosmetic, rather not
-# content <- tm_map(content, stripWhitespace)
 
 # combine words that should stay together ! to be extended
 for (j in seq(content)){
@@ -109,7 +97,34 @@ for (j in seq(content)){
   content[[j]] <- gsub("rates", "rate", content[[j]])
   content[[j]] <- gsub("economic", "econom", content[[j]])
   content[[j]] <- gsub("economy", "econom", content[[j]])
+  content[[j]] <- gsub("last week", "lastweek", content[[j]])
+  content[[j]] <- gsub("next week", "nextweek", content[[j]]) 
+  content[[j]] <- gsub("part time", "parttime", content[[j]]) 
+  content[[j]] <- gsub("schools", "school", content[[j]]) 
+  content[[j]] <- gsub("funds", "fund", content[[j]]) 
 }
+
+# remove stopwords using the standard list in tm package
+# remove them after part of speech tagging?
+
+stpw1  <- stopwords('english')
+stpw2  <- c("ths","th","st","rd","s","will","whose","wants",
+            "going","well","get","since","still","can", "also",
+            "can", "say","one","way","use", "also","howev",
+            "tell","will", "much","need","take","tend","even",
+            "like","particular","rather","said", "get","well",
+            "make","ask","come","end", "first","two","help",
+            "often","may", "might","see","someth","thing","point",
+            "post","look","right","now","think","'ve ", "'re ","third"
+            ) # own stop words
+comn    <- unique(c(stpw1,stpw2)) # select unique stopwords
+mystopwords <- unique(c(gsub("'","",comn),comn)) # final stop word list
+content <- tm_map(content, removeWords, mystopwords)
+
+# some weird concatenated words like "accommodativeyellen"
+
+# strip whitespace only cosmetic, rather not
+# content <- tm_map(content, stripWhitespace)
 
 # stemming -> deterministic or statistical
 # library(Rstem) # needs C/C++/Fortran
@@ -129,7 +144,10 @@ dtm       <- DocumentTermMatrix(content)
 # dim(as.matrix(dtm))
 
 # export to excel:
-#m <- as.matrix(dtm)   
+#m <- as.matrix(dtm) 
+#rownames(m) <- paste(substring(rownames(m),1,3),rep("..",nrow(m)),
+#                     substring(rownames(m),
+#                               nchar(rownames(m))-12,nchar(rownames(m))-4))
 #write.csv(m, file="dtm.csv") 
 
 # create similar analysis with exog/endog sentiment: 
@@ -176,43 +194,95 @@ findAssocs(dtmr,"employment", 0.8)
 
 # add cluster analysis and tokenization (e.g. bigrams)
 
-
 # Graphics ----------------------------------------------------------------
 
 library(ggplot2)
 library(wordcloud)
 
-wf  <- data.frame(term=names(freqr),occurrences=freqr) # term and occurence as col name
-p   <- ggplot(subset(wf, freqr>100), aes(term, occurrences)) # plot terms with freq >100
+wf  <- data.frame(term=names(freqr), occurrences=freqr) # term and occurence as col name
+p   <- ggplot(subset(wf, freqr>50), aes(term, occurrences)) # plot terms with freq >20
 p   <- p + geom_bar(stat="identity") # height of each bar is proportional to data value mapped to y-axis 
 p   <- p + theme(axis.text.x=element_text(angle=45, hjust=1)) # x-axis labels 45°
 p
 
-# Wordcloud
+# wordcloud
 # setting the same seed each time ensures consistent look across clouds
 set.seed(42)
-wordcloud(names(freq), freq, max.words=100, rot.per=0.2, colors=brewer.pal(6,"Dark2"))   
+wordcloud(names(freq), freq, max.words=100, rot.per=0.2,
+          random.color = T, colors=brewer.pal(8,"Dark2"))   
+
+# clustering by Term Similarity
+dtmss   <- removeSparseTerms(dtm, 0.70) # max 70% empty space   
+#inspect(dtmss)   
+d       <- dist(t(dtmss), method="euclidian") # calculate distance between words
+fit     <- hclust(d=d, method="ward.D2") # cluster them according to similarity
+
+plot(fit, hang=-1)
+groups  <- cutree(fit, k=5)   # "k" clusters   
+rect.hclust(fit, k=5, border="red") # draw dendogram with red borders around clusters   
+
+# K-means clustering (into specified number of groups)
+d       <- dist(t(dtmss), method="euclidian")   
+kfit    <- kmeans(d, 2)
+#print(kfit) # indicate ... 
+library(fpc)
+library(cluster)
+clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0) 
+# determine optimal number of clusters
+# look for "elbow" in plot of summed intra-cluster distances (withinss) as fn of k
+d       <- dist(m)
+wss     <- 2:29
+for (i in 2:29){
+  wss[i]  <- sum(kmeans(d,centers=i,nstart=25)$withins)
+}
+plot(2:29, wss[2:29], type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares") 
 
 
-# Clustering by Term Similarity
+# Topic Modelling ---------------------------------------------------------
 
+library(topicmodels)
 
+# Latent Dirichlet Allocation (LDA)
 
-# General Queries ---------------------------------------------------------
+# Set parameters for Gibbs sampling
+burnin  <- 4000
+iter    <- 2000
+thin    <- 500
+seed    <- list(2003,5,63,100001,765)
+nstart  <- 5
+best    <- TRUE
 
-# connect to the sqlite file
-con = dbConnect(drv="SQLite", dbname="country.sqlite")
-p1 = dbGetQuery( con,'select * from populationtable' )
-# count the Articles in the SQLite table
-p2 = dbGetQuery( con,'select count(*) from areastable' )
-# find entries of the DB from the last week
-p3 = dbGetQuery(con, "SELECT population WHERE DATE(timeStamp) < DATE('now', 'weekday 0', '-7 days')")
-# Clear the results of the last query
-dbClearResult(p3)
-# Select population with managerial type of job
-p4 = dbGetQuery(con, "select * from populationtable where jobdescription like '%manager%'")
+# Number of topics
+k       <- 4 # try different ones
 
+# Run LDA using Gibbs sampling
+ldaOut  <- LDA(dtm,k, method='Gibbs', control=list(nstart=nstart, 
+               seed = seed, best=best, burnin = burnin, iter = iter, thin=thin))
+
+# docs to topics
+ldaOut.topics <- as.matrix(topics(ldaOut))
+#write.csv(ldaOut.topics,file=paste('LDAGibbs',k,'DocsToTopics.csv'))
+
+# top 6 terms in each topic
+ldaOut.terms  <- as.matrix(terms(ldaOut,6))
+#write.csv(ldaOut.terms,file=paste('LDAGibbs',k,'TopicsToTerms.csv'))
+
+# probabilities associated with each topic assignment
+topicProbabilities <- as.data.frame(ldaOut@gamma)
+#write.csv(topicProbabilities,file=paste('LDAGibbs',k,'TopicProbabilities.csv'))
+
+# Find relative importance of top 2 topics
+topic1ToTopic2 <- lapply(1:nrow(dtm),function(x)
+  sort(topicProbabilities[x,])[k]/sort(topicProbabilities[x,])[k-1])
+
+# Find relative importance of second and third most important topics
+topic2ToTopic3 <- lapply(1:nrow(dtm),function(x)
+  sort(topicProbabilities[x,])[k-1]/sort(topicProbabilities[x,])[k-2])
+
+# write to file
+#write.csv(topic1ToTopic2,file=paste('LDAGibbs',k,'Topic1ToTopic2.csv'))
+#write.csv(topic2ToTopic3,file=paste('LDAGibbs',k,'Topic2ToTopic3.csv'))
 
 # End ---------------------------------------------------------------------
-
 
