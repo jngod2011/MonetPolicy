@@ -1,0 +1,14 @@
+
+# General Queries ---------------------------------------------------------
+
+# connect to the sqlite file
+con = dbConnect(drv="SQLite", dbname="country.sqlite")
+p1 = dbGetQuery( con,'select * from populationtable' )
+# count the Articles in the SQLite table
+p2 = dbGetQuery( con,'select count(*) from areastable' )
+# find entries of the DB from the last week
+p3 = dbGetQuery(con, "SELECT population WHERE DATE(timeStamp) < DATE('now', 'weekday 0', '-7 days')")
+# Clear the results of the last query
+dbClearResult(p3)
+# Select population with managerial type of job
+p4 = dbGetQuery(con, "select * from populationtable where jobdescription like '%manager%'")
