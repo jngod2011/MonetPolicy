@@ -72,14 +72,10 @@ toSpace <- content_transformer(
 content <- tm_map(content, content_transformer(tolower))
 
 # eliminate non-text elements
-content <- tm_map(content, toSpace, "-") 
-content <- tm_map(content, toSpace, ":")
-content <- tm_map(content, toSpace, "'")
-content <- tm_map(content, toSpace, ",")
-content <- tm_map(content, toSpace, "'")
-content <- tm_map(content, toSpace, """)
-content <- tm_map(content, toSpace, """)
-content <- tm_map(content, toSpace, "/")
+notext  <- c("-",":","'",",","'",""",""","/")
+for(i in 1:length(notext)){
+  content <- tm_map(content, toSpace, notext[i]) 
+}
 content <- tm_map(content, removePunctuation)
 # strip digits (std transformation, so no need for content_transformer)
 content <- tm_map(content, removeNumbers) # numbers needed?
@@ -164,7 +160,7 @@ freq[tail(ord)] # least frequent words
 # include words that occur in 3 to 27 documents & min and max length of word
 dtmr    <- DocumentTermMatrix(content, control=list(wordLengths=c(4, 20), 
                             bounds = list(global = c(3,27)))) 
-# ! arbitrary amount here, change once only relevan articles are considered
+# ! arbitrary amount here, change once only relevant articles are considered
 
 # alternative: 
 # dtms <- removeSparseTerms(dtm, 0.1) # matrix that is max 10% empty space   
@@ -183,8 +179,8 @@ findFreqTerms(dtmr,lowfreq=50) # all terms that appear 50 times
 # -> indicator for reaction to event?
 # measure sentiment of correlated words!
 findAssocs(dtmr,"rate", 0.8) # specify DTM and word
-findAssocs(dtmr,"funds", 0.8)
-findAssocs(dtmr,"econom", 0.6)
+findAssocs(dtmr,"fund", 0.8)
+findAssocs(dtmr,"econom", 0.8)
 findAssocs(dtmr,"inflation", 0.8)
 findAssocs(dtmr,"employment", 0.8)
 # the presence of a term in these list is not indicative of its frequency
@@ -212,7 +208,7 @@ wordcloud(names(freq), freq, max.words=100, rot.per=0.2,
           random.color = T, colors=brewer.pal(8,"Dark2"))   
 
 # clustering by Term Similarity
-dtmss   <- removeSparseTerms(dtm, 0.70) # max 70% empty space   
+dtmss   <- removeSparseTerms(dtm, 0.75) # max 75% empty space   
 #inspect(dtmss)   
 d       <- dist(t(dtmss), method="euclidian") # calculate distance between words
 fit     <- hclust(d=d, method="ward.D2") # cluster them according to similarity
@@ -230,7 +226,7 @@ library(cluster)
 clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0) 
 # determine optimal number of clusters
 # look for "elbow" in plot of summed intra-cluster distances (withinss) as fn of k
-d       <- dist(m)
+d       <- dist(as.matrix(dtmss))
 wss     <- 2:29
 for (i in 2:29){
   wss[i]  <- sum(kmeans(d,centers=i,nstart=25)$withins)
