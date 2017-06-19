@@ -42,7 +42,7 @@ save(OMO_20151217,file="OMO_20151217.RData")
 # Manipulate for TA -------------------------------------------------------
 
 setwd("C:/Users/Admin/Google Drive/Masterthesis")
-load("OMO_20151217.RData") # articles +/- 5 days around OMO 20151217
+load("OMO_20151217_short.RData") # articles +/- 5 days around OMO 20151217
 min(OMO_20151217[,3]) # first article
 max(OMO_20151217[,3]) # last article 
 
@@ -59,6 +59,8 @@ writeLines(as.character(content[[23]])) # example
 # detect text language
 library(textcat)
 all(textcat(content)=="english") # everything in english?
+content <- Corpus(VectorSource(OMO_20151217[which(
+                  textcat(content)=="english"),1])) 
 
 # part of speech tagging, see Schweinberger(2016)
 
@@ -72,7 +74,7 @@ toSpace <- content_transformer(
 content <- tm_map(content, content_transformer(tolower))
 
 # eliminate non-text elements
-notext  <- c("-",":","'",",","'",""",""","/")
+notext  <- c("-",":","'",",","'",""",""","/", "-", ">", "<", "â???T", "â???o", "â???"", "â???\u009d")
 for(i in 1:length(notext)){
   content <- tm_map(content, toSpace, notext[i]) 
 }
@@ -138,6 +140,8 @@ content   <- tm_map(content, PlainTextDocument) # to make DTM command work
 dtm       <- DocumentTermMatrix(content)
 # inspect(dtm) # find errors in manipulation
 # dim(as.matrix(dtm))
+#save(dtm,file="dtm_20151217.RData")
+#load("dtm_20151217.RData") 
 
 # export to excel:
 #m <- as.matrix(dtm) 
@@ -151,15 +155,15 @@ dtm       <- DocumentTermMatrix(content)
 
 # Mining Corpus -----------------------------------------------------------
 
-freq    <- colSums(as.matrix(dtm)) # frequency of occurrence o each word
+freq    <- colSums(as.matrix(dtm)) # frequency of occurrence of each word
 length(freq) # check: total number of words
 ord     <- order(freq,decreasing=TRUE) # descending order of word frequency
 freq[head(ord)] # most frequent words
 freq[tail(ord)] # least frequent words
 
-# include words that occur in 3 to 27 documents & min and max length of word
+# include words that occur in 10 to 300 documents & min and max length of word
 dtmr    <- DocumentTermMatrix(content, control=list(wordLengths=c(4, 20), 
-                            bounds = list(global = c(3,27)))) 
+                            bounds = list(global = c(20,1900)))) 
 # ! arbitrary amount here, change once only relevant articles are considered
 
 # alternative: 
@@ -173,7 +177,7 @@ ordr      <- order(freqr,decreasing=TRUE) # descending order of word frequency
 freqr[head(ordr)] # most frequent words
 freqr[tail(ordr)] # least frequent words
 
-findFreqTerms(dtmr,lowfreq=50) # all terms that appear 50 times
+findFreqTerms(dtmr,lowfreq=200) # all terms that appear 200 times
 
 # check for: correlation (co-occurrence of words in multiple documents) 
 # -> indicator for reaction to event?
@@ -196,7 +200,7 @@ library(ggplot2)
 library(wordcloud)
 
 wf  <- data.frame(term=names(freqr), occurrences=freqr) # term and occurence as col name
-p   <- ggplot(subset(wf, freqr>50), aes(term, occurrences)) # plot terms with freq >20
+p   <- ggplot(subset(wf, freqr>1500), aes(term, occurrences)) # plot terms with freq >20
 p   <- p + geom_bar(stat="identity") # height of each bar is proportional to data value mapped to y-axis 
 p   <- p + theme(axis.text.x=element_text(angle=45, hjust=1)) # x-axis labels 45°
 p
