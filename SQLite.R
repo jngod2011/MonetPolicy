@@ -89,6 +89,7 @@ for (j in seq(content)){
   content[[j]] <- gsub("janet yellen", "janetyellen", content[[j]])
   content[[j]] <- gsub("federal reserve bank", "fed", content[[j]])
   content[[j]] <- gsub("federal reserve", "fed", content[[j]])
+  content[[j]] <- gsub("federal funds rate target", "federalfundsratetarget", content[[j]])
   content[[j]] <- gsub("monetary policy", "monetarypolicy", content[[j]])
   content[[j]] <- gsub("unemployment rate", "unemploymentrate", content[[j]])
   content[[j]] <- gsub("central bank", "centralbank", content[[j]])
