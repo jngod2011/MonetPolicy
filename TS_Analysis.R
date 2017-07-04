@@ -19,33 +19,12 @@ library(xlsx)
 # c.f. class MP Ellingsen, Söderström, p. 25
 # announcements: https://www.federalreserve.gov/feeds/h15.html
 
-YCGT                  <- read.csv(file="data/US_Treasury_Actives_Curve.csv", 
-                                  header=TRUE, sep=";", na.strings =".", 
-                                  stringsAsFactors=FALSE)
-YCGT[,1]              <- as.Date(YCGT[,1],"%d.%m.%Y") 
-colnames(YCGT)        <- c("Date","1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","30Y")
-
-# !! how to treat values missing due to holidays/weekends etc?
-# replace NAs with the last non-NA value - for instance!
-# !! look up first NA levels; hard paste (outch)
-YCGT[1,2] = YCGT[1,3]# noooooooooooooo
-YCGT[1,5] = (YCGT[1,4]+YCGT[1,6])/2# noooooooooooooo
-YCGT[1,9] = (YCGT[1,8]+YCGT[1,10])/2# noooooooooooooo
-# better extrapolate somehow
-for(j in 2:ncol(YCGT)){
-  for(i in 1:nrow(YCGT)){
-    if(is.na(YCGT[i,j])==T){
-      YCGT[i,j]               <- YCGT[i-1,j]
-    }
-  } 
-}
-# truncate data to relevant time period
-YCGT                    <- YCGT[which(
-          YCGT[,1]=="2007-01-01"):which( # sample start
-          YCGT[,1]=="2016-12-31"),]      # sample end
-
-# plot(strptime(YCGT[,1],'%d-%m-%dY'),YCGT[,2],type='l',xlab="Date",ylab="1M")
-
+# from Thompson Reuters Data Stream
+YieldCurves           <- read.csv(file="data/DataStreamYieldCurves2002today.csv",
+                                  header = T, sep = ";", na.strings = ".",
+                                  stringsAsFactors = F)
+YieldCurves[,1]       <- as.Date(YieldCurves[,1],"%Y-%m-%d")
+colnames(YieldCurves) <- c("Date","1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","20Y","30Y")
 
 # Read Target Interest Rate -----------------------------------------------
 
@@ -110,6 +89,35 @@ OMO_dates     <- read.xlsx("data/FED_OpenMarket_Operations.xlsx", sheetName = "O
 #print(xtable(as.data.frame(OMO_dates[,c(1,3:16)]), caption="Federal Funds Targets.", 
 #             label = "tab:OMOs", align="rrrrrrrrrrrrrrrr", floating=TRUE,
 #             digits=c(0,0,4,4,4,4,3,3,3,3,3,3,3,3,3,3)), booktabs=TRUE, caption.placement="top")
+
+# BBG data ----------------------------------------------------------------
+# from Bloomberg - data to be updated!
+#YCGT                  <- read.csv(file="data/US_Treasury_Actives_Curve.csv", 
+#                                  header=TRUE, sep=";", na.strings =".", 
+#                                  stringsAsFactors=FALSE)
+#YCGT[,1]              <- as.Date(YCGT[,1],"%d.%m.%Y") 
+#colnames(YCGT)        <- c("Date","1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","30Y")
+
+# !! how to treat values missing due to holidays/weekends etc?
+# replace NAs with the last non-NA value - for instance!
+# !! look up first NA levels; hard paste (outch)
+#YCGT[1,2] = YCGT[1,3]# noooooooooooooo
+#YCGT[1,5] = (YCGT[1,4]+YCGT[1,6])/2# noooooooooooooo
+#YCGT[1,9] = (YCGT[1,8]+YCGT[1,10])/2# noooooooooooooo
+# better extrapolate somehow
+#for(j in 2:ncol(YCGT)){
+#  for(i in 1:nrow(YCGT)){
+#    if(is.na(YCGT[i,j])==T){
+#      YCGT[i,j]               <- YCGT[i-1,j]
+#    }
+#  } 
+#}
+# truncate data to relevant time period
+#YCGT                    <- YCGT[which(
+#          YCGT[,1]=="2007-01-01"):which( # sample start
+#          YCGT[,1]=="2016-12-31"),]      # sample end
+
+# plot(strptime(YCGT[,1],'%d-%m-%dY'),YCGT[,2],type='l',xlab="Date",ylab="1M")
 
 
 ####################################################
