@@ -14,7 +14,7 @@ library(xtable)
 #library(XML)
 library(xlsx)
 
-# Read YC Data ------------------------------------------------------------
+# Read Yield Curve Data ----------------------------------------------------
 
 # c.f. class MP Ellingsen, Söderström, p. 25
 # announcements: https://www.federalreserve.gov/feeds/h15.html
@@ -33,42 +33,56 @@ colnames(YieldCurves) <- c("Date","1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y",
 # Source: https://www.investing.com/economic-calendar/interest-rate-decision-168
 # Source: http://www.tradingeconomics.com/united-states/interest-rate
 
-OMO                       <- read.csv(file="data/FRB_OMO.csv", header=TRUE, sep=";",
-                                    na.strings =".", stringsAsFactors=FALSE)
-OMO                       <- OMO[nrow(OMO):1, ]
+OMO                       <- read.csv(file="data/FED_OpenMarket_Operations.csv", 
+                                    header=TRUE, sep=";", na.strings =".", 
+                                    stringsAsFactors=FALSE)
 OMO[,1]                   <- as.Date(OMO[,1],"%Y-%m-%d") 
-colnames(OMO)             <- c("Date","Increase (in BP)","Decrease (in BP) Min",
-                         "Decrease (in BP) Max","Level (in %) Min","Level (in %) Max")
+colnames(OMO)             <- c("Date","Scheduled","Target_l", "Target_h", "Change_l", 
+                               "Change_h",
+                               "1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","20Y",
+                               "30Y", "Classification")
+# fill Yield Curve data into OMO dates
+for(i in 1:nrow(OMO)){
+  if(!length(which(OMO[i,1]==YieldCurves[,1]))==T){# NA when date is not given
+    OMO[i,7:17]                 <- NA
+  }
+  else{
+    OMO[i,7:17]               <- YieldCurves[# find YC date that corresponds to OMO
+                                          which(OMO[i,1]==YieldCurves[,1]), 
+                                          2:ncol(YieldCurves)]
+  }
+} # export OMO table to latex after classification w/o 1st row
 
-# set up data frame with date from 3mTbill and corresponding interest rate targets
-Rates                     <- data.frame(YCGT[,1])
-Rates[,1]                 <- as.Date(Rates[,1])
-for(j in 2:3){# fill min and max target in columns 3 & 4 (from columns 5 & 6)
-  for(i in 1:nrow(Rates)){
-    if(!length(which(Rates[i,1]==OMO[,1]))==T){# trick when date is not included
-      Rates[i,j]                 <- NA
+# set up data frame interest rates and targets
+TargetRates               <- data.frame(YieldCurves[,1])
+for(j in 2:3){# fill min and max target in columns 2 & 3
+  for(i in 1:nrow(TargetRates)){
+    if(!length(which(TargetRates[i,1]==OMO[,1]))==T){# NA when date is not given
+      TargetRates[i,j]                 <- NA
     }
     else{
-      Rates[i,j]                 <- OMO[which(Rates[i,1]==OMO[,1]),3+j] # cols 5 & 6 
+      TargetRates[i,j]                 <- OMO[which(TargetRates[i,1]==OMO[,1]),1+j] # cols 3 & 4 
     }
   }
 }
-colnames(Rates)             <- c('Date','Target_min','Taget_max')
+colnames(TargetRates)             <- c('Date','Target_min','Taget_max')
+
 # replace NAs with the last value that is not NA in columns 3 & 4 of data frame
-for(j in 2:ncol(Rates)){
+for(j in 2:ncol(TargetRates)){
   # if first value is NA, take the one from previous year
-  if(is.na(Rates[1,j])==T){
-    Rates[1,j]               <- OMO[1,3+j] # first value is from 2006, cols 5 & 6 
+  if(is.na(TargetRates[1,j])==T){
+    TargetRates[1,j]              <- OMO[1,1+j] # first value is from 2002, cols 5 & 6 
   }
-  for(i in 1:nrow(Rates)){
-    if(is.na(Rates[i,j])==T){
-      Rates[i,j]               <- Rates[i-1,j]
+  for(i in 1:nrow(TargetRates)){
+    if(is.na(TargetRates[i,j])==T){
+      TargetRates[i,j]               <- TargetRates[i-1,j]
     }
   } 
 }
 
-plot(Rates[,1],Rates[,2],type='l',xlab="Date",ylab="Interest Rates",col='cornflowerblue')
-lines(Rates[,1],Rates[,3], col='cornflowerblue')
+plot(TargetRates[,1],TargetRates[,2],type='l',xlab="Date",
+     ylab="Interest Rates",col='cornflowerblue')              # lower bound
+lines(TargetRates[,1],TargetRates[,3], col='cornflowerblue')  # upper bound
 
 # add decisions where nothing was changed for analysis!
 
