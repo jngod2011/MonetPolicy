@@ -285,5 +285,71 @@ topic2ToTopic3 <- lapply(1:nrow(dtm),function(x)
 #write.csv(topic1ToTopic2,file=paste('LDAGibbs',k,'Topic1ToTopic2.csv'))
 #write.csv(topic2ToTopic3,file=paste('LDAGibbs',k,'Topic2ToTopic3.csv'))
 
-# End ---------------------------------------------------------------------
 
+# Classification Function -------------------------------------------------
+
+# simplify format of 'content' object
+library(plyr)
+articles <- laply(content, function(t) as.character(t))
+head(articles, 5)
+
+# mon. policy responds to econ developments
+endog.words <- scan(file='data/EndogenousWords.txt', what='character',quiet=T)
+# mon. policy responds to change in policy preferences
+exog.words  <- scan(file='data/ExogenousWords.txt', what='character',quiet=T)
+
+
+# write score sentiment function
+score.sentiment <- function(input, endog.words, exog.words, .progress='none'){
+  # returns for every item in the input file the number of endogenous - exogenous terms
+  require(plyr)
+  require(stringr)
+  
+  # we got a vector of sentences. plyr will handle a list
+  # or a vector as an "l" for us
+  # we want a simple array ("a") of scores back, so we use 
+  # "l" + "a" + "ply" = "laply":
+  scores = laply(input, function(sentence, endog.words, exog.words){
+
+# pre-processing done before -> include later in function    
+    # clean up sentences with R's regex-driven global substitute, gsub():
+#    sentence = gsub('[[:punct:]]', '', sentence)
+#    sentence = gsub('[[:cntrl:]]', '', sentence)
+#    sentence = gsub('\\d+', '', sentence)
+#    # and convert to lower case:
+#    sentence = tolower(sentence)
+    
+    # split into words. str_split is in the stringr package
+    word.list = str_split(sentence, '\\s+')
+    # sometimes a list() is one level of hierarchy too much
+    words = unlist(word.list)
+    
+    # compare our words to the dictionaries of positive & negative terms
+    endog.matches = match(words, endog.words)
+    exog.matches = match(words, exog.words)
+    
+    # match() returns the position of the matched term or NA
+    # we just want a TRUE/FALSE:
+    endog.matches = !is.na(endog.matches)
+    exog.matches = !is.na(exog.matches)
+    
+    # and conveniently enough, TRUE/FALSE will be treated as 1/0 by sum():
+    score = sum(endog.matches) - sum(exog.matches)
+    
+    return(score)
+  }, 
+  endog.words, exog.words, .progress=.progress)
+  
+  scores.df = data.frame(score=scores, text=input)
+  return(scores.df)
+}
+
+# algorithm sanity check 
+sample <- c("for inflation to remain on the same level","a new objective function",
+            "We do not care about what what is happening at all")
+
+results <- score.sentiment(input=sample, endog.words, exog.words)
+class(results)
+results$score # >0 means endog, <0 means exog, 0 means unclassified
+
+# End ---------------------------------------------------------------------
