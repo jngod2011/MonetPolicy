@@ -51,8 +51,11 @@ max(OMO_20151217[,3]) # last article
 library(tm)
 # maybe smoother with "DirSource(directory = "texts/",encoding ="latin1" )"
 title   <- Corpus(VectorSource(OMO_20151217[,2])) 
-content <- Corpus(VectorSource(OMO_20151217[,1])) 
+content <- Corpus(VectorSource(OMO_20151217[,1]))
+
 #summary(content)[1:10,]
+# add title to content column -> slow
+#transform(OMO_20151217, newcol=paste(OMO_20151217[,2], OMO_20151217[,1], sep=" "))
 
 # inspect(title)
 writeLines(as.character(title[[23]])) # example
@@ -86,7 +89,7 @@ content <- tm_map(content, removeNumbers) # numbers needed?
 
 # combine words that should stay together ! to be extended
 for (j in seq(content)){
-  content[[j]] <- gsub("percentage point", "percentagepoint",content[[j]])
+  content[[j]] <- gsub("percentage point", "percentagepoint", content[[j]])
   content[[j]] <- gsub("economic recovery", "economicrecovery", content[[j]])
   content[[j]] <- gsub("janet yellen", "janetyellen", content[[j]])
   content[[j]] <- gsub("federal reserve bank", "fed", content[[j]])
@@ -119,6 +122,7 @@ content <- tm_map(content, removeWords, mystopwords)
 
 # strip whitespace only cosmetic, rather not
 # content <- tm_map(content, stripWhitespace)
+content <- gsub (" {2 ,}", " ", content)
 
 # stemming -> deterministic or statistical
 # library(Rstem) # needs C/C++/Fortran
