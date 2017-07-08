@@ -2,7 +2,19 @@
 % % % % % % 			Methodology			% % % % % % % %
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %	
 
-\textcite{Liu.2012} summarizes the most influential papers in the area of sentiment analysis or opinion mining, a procedure to determine whether a snippet of text, be it in the form of a commentary on a product, post on social media or article in a newspaper, communicates a positive or negative message about the topic at stake using natural language processing (NLP). Application possibilities of these tools are ample, ranging from businesses improving their products through online reviews to automated fraud and insider trading detection through monitoring analysts messaging behaviour and are thus of major importance for businesses, individuals and policy makers alike. 
+\textcite{Liu.2012} summarizes the most influential papers in the area of sentiment analysis or opinion mining, a procedure to determine whether a snippet of text, be it in the form of a commentary on a product, post on social media or article in a newspaper, communicates a positive, negative or neutral message about the topic at stake using natural language processing (NLP). Application possibilities of these tools are ample, ranging from businesses improving their products through online reviews to automated fraud and insider trading detection through monitoring analysts messaging behaviour and are thus of major importance for businesses, individuals and policy makers alike. 
 Building on \textcite{Liu.2012}, 
 %AND others
 I derive a procedure to extract an opinion on published articles by major international newspapers and agencies in order to determine the prevalent public opinion on the nature of a target rate move by the FED.
+
+\subsection{Terminology}
+
+As texts are as typical example of unstructured data, it needs to be converted to structured data in order to perform meaningful analyses. Therefore, we follow \textcite{Liu.2010} in defining an opinion as the quintuple\footnote{Even though the literature on opinion mining takes subjectivity and emotion into account \parencite{Wiebe.2000,Wiebe.2004,Riloff.2006}, we refrain from doing so as the source of the data comes from professional and reviewed media sources exclusively and the aim of the analysis is not to determine how individuals feel about a certain product or situation but rather extract the summary of public opinion from a newspaper article statement.} 
+\begin{equation}
+	(e_j, a_{jk}, so_{ijkl}, h_i, t_l)
+\end{equation}
+where $e_j$ is the target entity which forms the opinion target together with $a_{jk}$, an aspect of the former; $so_{ijkl}$ refers to the sentiment value of the opinion source, $h_i$, on $a_{jk}$ of $e_j$ at time $t_l$.
+% e.g. entity is FED action, aspect is interest rate decision
+% omit opinion holders
+Since the first step of the analysis, the identification of relevant articles, as described in section\dots determines the opinion target while time and source are given exogenously, we focus on the discovering the sentiment of each text snippet. 
+
