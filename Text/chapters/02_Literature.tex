@@ -5,14 +5,15 @@
 \subsection{Monetary Policy}
 
 \dots
-
+% start with this since it's the aim of the paper, background for method later
 % FED target history, analyses about yield curve movements
 
 \subsection{Computational Linguistics}
 
 \dots
 
-% why is this becoming more important and why can it be used for our purposes
+% why is this becoming more important and why can it be used for our purposes -> the Hess stuff
+% lots of things have been done wrt sentiment in terms of pos/neg - adjust for engod/exog
 
 \subsection{Opinion Mining}
 
@@ -21,5 +22,20 @@
 \textcite{Pang.2002}, on the other hand, applies and compares three supervised learning techniques to classify reviews, namely na\"{i}ve Bayes, maximum entropy and support vector machines. 
 
 % identification of relevant articlesd not done, either first page... or just one column.... arbitrary! might lose info
+% sure, important stff appears on front mages and in the same collumn, latter had issue (sometimes not mentioned);
+% former biased by construction as uncertainty is less news than a confident prediction
+% unigrams and bigrams, n-grams
 
-% unigrams and bigrams
+Most techniques use supervised learning according to \textcite{Wiebe.1999} which classifies sentences into the classes subjective or objective before determining the sentiment as the former classes usually do not express a positive or negative opinion. The importance of this observations stems from the fact that due to the vast amount of accessible data, computations are highly involved and thus can be made significantly more efficient by filtering articles with respect to their propensity to contribute to sentiment identification (or whatever other goal one might have in mind). 
+
+% Turney 2002, thumbs up or down uses log-likelyhood ratio test to determine sentiment
+% also: strength of sentiment - in my case maybe certainty? see Wilson 2004
+% explicit aspects analysed, impicit not yet
+
+Multilevel latent categorization as described in \textcite{Guo.2009} uses Latent Dirichlet Allocation (LDA) 
+
+% careful with valence shifters, presuppositional items and modal auciliary verbs -> combine to unigram
+% sarcasm, on the other hand should play less of an important role since 'boring' facts are reported
+
+% include sentiment ontology tree for exog/endog classification (cf p. 106)
+\textcite{Wang.2010} assume the overall review is a linear combination of its aspect ratings. Although they model the problem as Bayesian regression, \dots % p.112
