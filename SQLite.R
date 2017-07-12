@@ -67,8 +67,48 @@ all(textcat(content)=="english") # everything in english?
 content <- Corpus(VectorSource(OMO_20151217[which(
                   textcat(content)=="english"),1])) 
 
+# POS tagging -------------------------------------------------------------
 # part of speech tagging, see Schweinberger(2016)
+#install.packages("openNLPmodels.en", repos = "http://datacube.wu.ac.at/", type ="source")
+library(NLP)
+library(openNLP)
+library(openNLPmodels.en)
+library(stringr)
+library(gsubfn)
+library(plyr)
 
+# prepare corpus for POS tagging
+corpus.tmp    <- laply(content, function(t){as.character(t)})
+# paste all elements of the corpus together
+corpus.tmp    <- lapply(corpus.tmp, function(x){x <- paste(x, collapse = " ")})
+# clean corpus
+corpus.tmp    <- lapply(corpus.tmp, function(x){x <- enc2utf8(x)})
+corpus.tmp    <- gsub(" {2,}", " ", corpus.tmp)
+# remove spaces at beginning and end of strings
+corpus.tmp    <- str_trim(corpus.tmp, side = "both")
+
+# convert corpus files into strings
+Corpus        <- lapply(corpus.tmp, function(x){x <- as.String(x)})
+
+# apply annotators to Corpus
+Corpus.tagged <- lapply(Corpus, function(x){
+ sent_token_annotator <- Maxent_Sent_Token_Annotator()
+ word_token_annotator <- Maxent_Word_Token_Annotator()
+ pos_tag_annotator    <- Maxent_POS_Tag_Annotator()
+ y1 <- annotate(x, list(sent_token_annotator,word_token_annotator))
+ y2 <- annotate(x, pos_tag_annotator, y1)
+ # y3 <- annotate (x, Maxent_POS_Tag_Annotator(probs = TRUE), y1)
+ y2w  <- subset(y2, type == "word")
+ tags <- sapply(y2w$features , '[[', "POS")
+ r1 <- sprintf("%s/%s", x[y2w], tags)
+ r2 <- paste(r1, collapse = " ")
+ return(r2)}
+)
+
+# inspect results
+head(Corpus.tagged)
+
+# Pre-process data --------------------------------------------------------
 # create the toSpace content transformer
 toSpace <- content_transformer(
             function(x, pattern){
@@ -79,7 +119,7 @@ toSpace <- content_transformer(
 content <- tm_map(content, content_transformer(tolower))
 
 # eliminate non-text elements
-notext  <- c("-",":","'",",","'",""",""","/", "-", ">", "<", "â???T", "â???o", "â???"", "â???\u009d")
+notext  <- c(" ") # c/p from .txt file
 for(i in 1:length(notext)){
   content <- tm_map(content, toSpace, notext[i]) 
 }

@@ -8,7 +8,8 @@
 
 # read cleaned body of text
 setwd("C:/Users/Admin/Google Drive/Masterthesis")
-load("data/texts/20151217_ContentClean.RData") # articles +/- 5 days around OMO 20151217
+#load("data/texts/20151217_ContentClean.RData") # articles +/- 5 days around OMO 20151217
+# error?
 
 # DTM ---------------------------------------------------------------------
 
@@ -164,7 +165,7 @@ topic2ToTopic3 <- lapply(1:nrow(dtm),function(x)
 
 # simplify format of 'content' object
 library(plyr)
-articles <- laply(content, function(t) as.character(t))
+articles <- laply(content, function(t){as.character(t)})
 head(articles, 5)
 
 # mon. policy responds to econ developments

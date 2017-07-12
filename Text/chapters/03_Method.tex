@@ -20,6 +20,8 @@ Since the first step of the analysis, the identification of relevant articles, a
 
 %how to get stuff out of the database: Long, Zhang and Zhu (2010) & Ma and Wan (2010)
 
+Part-of-Speech (POS) tags as presented in table~\vref{tab:POS_tags} are applied to the articles through a pre-trained model by \textcite{OpenNLP.2016} that assigns POS tags based on the probability of what the correct POS tag is for newspaper language and selects the one with highest probability.
+
 \subsection{Sentiment determination}
 
 In order to identify the sentiment of each text piece as endogenous or exogenous, a list of words and expressions has to be set up which can be done in three different ways as discussed in section~\ref{sec:Lit}. The most straight forward one, which has been chosen here for its comprehensible and deterministic nature, being manually setting it up in a one-time effort. 
