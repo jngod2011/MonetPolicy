@@ -27,6 +27,7 @@ a4paper, 12pt, DIV=calc, BCOR5mm,abstracton]{scrartcl}
 %\usepackage{array}										% \compress Spaltenweise
 \usepackage{paralist}									% Kleinerer Abstand enumerate
 \usepackage{rotating} 									% rotate tables
+\usepackage[perpage]{footmisc}							% start footnote numbering per page
 
 \usepackage{setspace}
 %\AfterTOCHead{\singlespacing}
@@ -115,22 +116,22 @@ a4paper, 12pt, DIV=calc, BCOR5mm,abstracton]{scrartcl}
 
 \pagenumbering{arabic}
 
-\section{Introduction} \label{ch:Intro}
+\section{Introduction} \label{sec:Intro}
 \dots%\input{chapters/01_Intro}
 
-\section{Literature Review} \label{ch:Lit}
+\section{Literature Review} \label{sec:Lit}
 \input{chapters/02_Literature}
 
-\section{Methodology} \label{ch:Meth}
+\section{Methodology} \label{sec:Meth}
 \input{chapters/03_Method}
 
-\section{Results} \label{ch:Res}
+\section{Results} \label{sec:Res}
 \dots%\input{chapters/04_Matlab}
 
-\section{Discussion} \label{ch:Disc}
+\section{Discussion} \label{sec:Disc}
 \dots%\input{chapters/05_Results}
 
-\section{Conclusion} \label{ch:Conc}
+\section{Conclusion} \label{sec:Conc}
 \dots%\input{chapters/06_Conclusion}
 
 	

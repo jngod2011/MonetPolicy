@@ -14,6 +14,7 @@
 
 % why is this becoming more important and why can it be used for our purposes -> the Hess stuff
 % lots of things have been done wrt sentiment in terms of pos/neg - adjust for engod/exog
+% explain corpus
 
 \subsection{Opinion Mining}
 
@@ -35,7 +36,12 @@ Most techniques use supervised learning according to \textcite{Wiebe.1999} which
 Multilevel latent categorization as described in \textcite{Guo.2009} uses Latent Dirichlet Allocation (LDA) 
 
 % careful with valence shifters, presuppositional items and modal auciliary verbs -> combine to unigram
-% sarcasm, on the other hand should play less of an important role since 'boring' facts are reported
+% sarcasm, on the other hand should play less of an important role since 'boring' facts are reported -> different in blogs
+% Opinion spam as in Jindal and Liu 2007, 2008 not an issue either
 
 % include sentiment ontology tree for exog/endog classification (cf p. 106)
 \textcite{Wang.2010} assume the overall review is a linear combination of its aspect ratings. Although they model the problem as Bayesian regression, \dots % p.112
+
+In order to extract the sentiment of a statement, an opinion lexicon has to be created which entails a list of words and expressions that are used to express people's subjective feelings and opinions. Apart from manually creating this list or access available dictionaries such as WordNet\textsuperscript{\textregistered} by \textcite{Fellbaum.1998}, it is possible to rely on syntactic patterns in large corpora as has been suggested in \textcite{Ding.2008,Hatzivassiloglou.1997,Kanayama.2006,Turney.2002,Yu.2003}. 
+
+Apart from the direct rating through so called regular opinions as laied out above, \textcite{Ding.2009,Ganapathibhotla.2008,Jindal.2006}, among others, analyse comparative opinions. Since the latter is of merely of subordinate use for the classification of monetary policy task, we refer the reader to \textcite{Liu.2012} for an overview of the topic. 
