@@ -77,7 +77,7 @@ library(stringr)
 library(gsubfn)
 library(plyr)
 
-# prepare corpus for POS tagging
+# prepare corpus for POS tagging, convert to character
 corpus.tmp    <- laply(content, function(t){as.character(t)})
 # paste all elements of the corpus together
 corpus.tmp    <- lapply(corpus.tmp, function(x){x <- paste(x, collapse = " ")})
@@ -88,10 +88,10 @@ corpus.tmp    <- gsub(" {2,}", " ", corpus.tmp)
 corpus.tmp    <- str_trim(corpus.tmp, side = "both")
 
 # convert corpus files into strings
-Corpus        <- lapply(corpus.tmp, function(x){x <- as.String(x)})
+corpus.tmp    <- lapply(corpus.tmp, function(x){x <- as.String(x)})
 
 # apply annotators to Corpus
-Corpus.tagged <- lapply(Corpus, function(x){
+Corpus.tagged <- lapply(corpus.tmp, function(x){
  sent_token_annotator <- Maxent_Sent_Token_Annotator()
  word_token_annotator <- Maxent_Word_Token_Annotator()
  pos_tag_annotator    <- Maxent_POS_Tag_Annotator()
@@ -105,10 +105,120 @@ Corpus.tagged <- lapply(Corpus, function(x){
  return(r2)}
 )
 
-# inspect results
-head(Corpus.tagged)
+# alternative: http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/
+# output format not optimal for further analyses
+
+Corpus.tagged_backup <- Corpus.tagged
 
 # Pre-process data --------------------------------------------------------
+
+# list possible tags; 'nested' acronyms last!
+Tags_unique <- c("''", "-LRB-", "-RRB-", "$", ",", ":",  "``", "CC",
+                 "CD", "DT", "EX", "FW", "IN", "JJR", "JJS", "JJ", "MD", 
+                 "NNPS", "NNP", "NNS", "NN", "PDT", "POS", "PRP$", "PRP",
+                 " RBR", "RBS", "RB", "RP", "SYM", "TO", "UH", "VBD",
+                 "VBG", "VBN", "VBP", "VBZ", "VB","WDT", "WP$","WP", "WRB")
+Tags_keep    <- c("-LRB-", "-RRB-", "CC", "FW", "JJR", "JJS", "JJ", 
+                  "MD", "NNPS", "NNP", "NNS", "NN", "PDT", "RBR",
+                  "RBS", "RB", "VBD", "VBG", "VBN", "VBP", "VBZ", "VB")
+Tags_discard <- setdiff(Tags_unique,Tags_keep)
+
+#Corpus.tagged <- Corpus.tagged_backup
+
+# remove non-cruicial terms
+for(i in seq(Corpus.tagged)){
+  for(j in seq(Tags_discard)){
+  Corpus.tagged[[i]] <- gsub(
+    paste(paste("\\b\\S+", Tags_discard[j], sep = ""),"\\b",sep=""), "", Corpus.tagged[[i]])
+  }
+  #  Corpus.tagged[[i]] <- gsub("\\b\\S+CD\\b", "", Corpus.tagged[[i]]) #rm /CD manually
+#  Corpus.tagged[[i]] <- gsub(",/,", "", Corpus.tagged[[i]]) # rm ,/,
+#  Corpus.tagged[[i]] <- gsub("./.", "", Corpus.tagged[[i]]) # rm ./.
+#  Corpus.tagged[[i]] <- gsub("$", "", Corpus.tagged[[i]])   # rm $ -> doesn't work?
+#  Corpus.tagged[[i]] <- gsub("'", "", Corpus.tagged[[i]])   # rm '    
+} # alt. use tm_map to remove numbers and punctuation
+
+# remove ending from cruicial words
+for (i in seq(Corpus.tagged)){
+  for(j in seq(Tags_keep)){  
+  Corpus.tagged[[i]] <- gsub(
+    paste("/", Tags_keep[j], sep = ""), "", Corpus.tagged[[i]])
+  }
+}
+
+# inspect
+#Corpus.tagged[[1]]
+#Corpus.tagged_backup[[1]]
+
+# convert list to VCorpus
+Corpus.untagged <- Corpus(VectorSource(Corpus.tagged))
+# Corpus.untagged <- as.VCorpus(Corpus.tagged) # bad idea
+
+# remove punctuation
+Corpus.untagged <- tm_map(Corpus.untagged, removePunctuation)
+# remove digits (DO WE NEED THEM)
+Corpus.untagged <- tm_map(Corpus.untagged, removeNumbers)
+
+# transform all words to lowercase (careful with meta data)
+#Corpus.untagged <- tm_map(Corpus.untagged, tolower) # content_transformer(tolower)?
+Corpus.untagged <- tm_map(Corpus.untagged, content_transformer(tolower))
+
+# discard stopwords?
+
+# remove unnecessary whitespace TO LIST OR TO CORPUS?
+Corpus.untagged <- tm_map(Corpus.untagged, stripWhitespace)
+
+# alternative a):
+#for (i in seq(Corpus.untagged)){
+#  Corpus.untagged[[i]] <- gsub(" {2 ,}", "", Corpus.untagged[[i]])
+#} # concatenates words in a weird way... FIX!
+
+# alternative b):
+#content <- gsub (" {2 ,}", " ", content)
+
+#Corpus.untagged[[1]]
+#writeLines(as.character(Corpus.untagged[[23]]))
+#writeLines(as.character(content[[23]]))
+
+
+## not implemented yet
+# combine words that should stay together ! TO BE EXTENDED
+for (j in seq(Corpus.untagged)){
+  Corpus.untagged[[j]] <- gsub("percentage point", "percentagepoint", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("economic recovery", "economicrecovery", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("janet yellen", "janetyellen", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("federal reserve bank", "fed", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("federal reserve", "fed", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("federal funds rate target", "federalfundsratetarget", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("monetary policy", "monetarypolicy", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("unemployment rate", "unemploymentrate", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("central bank", "centralbank", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("rates", "rate", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("economic", "econom", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("economy", "econom", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("last week", "lastweek", Corpus.untagged[[j]])
+  Corpus.untagged[[j]] <- gsub("next week", "nextweek", Corpus.untagged[[j]]) 
+  Corpus.untagged[[j]] <- gsub("part time", "parttime", Corpus.untagged[[j]]) 
+  Corpus.untagged[[j]] <- gsub("schools", "school", Corpus.untagged[[j]]) 
+  Corpus.untagged[[j]] <- gsub("funds", "fund", Corpus.untagged[[j]]) 
+} # add phrases that indicate endog and exog
+## not implemented yet
+
+# stemming -> deterministic or statistical
+# library(Rstem) # needs C/C++/Fortran
+# lemmatisation: https://cran.r-project.org/web/packages/openNLP/openNLP.pdf
+Corpus.untagged <- tm_map(Corpus.untagged,stemDocument)
+
+writeLines(as.character(Corpus.untagged[[24]])) # inspect
+
+# for further analysis try
+articles <- laply(Corpus.untagged, function(t){as.character(t)})
+
+# export text body
+setwd("C:/Users/Admin/Google Drive/Masterthesis")
+#save(Corpus.untagged,file="data/texts/20151217_Corpus_Clean.RData")
+
+# Pre-process data alternative --------------------------------------------
 # create the toSpace content transformer
 toSpace <- content_transformer(
             function(x, pattern){
