@@ -1,45 +1,12 @@
-####################################################
-##                    Thesis                      ##
-####################################################
+##########################################################
+###                       Thesis                       ###
+##########################################################
 
-# Connect to database and pre-process data
-
-# rm(list=ls())
-library("sqldf")
-library("XLConnect")
-
-setwd("E:/20170421_MA_Data/reuters")
-
-# Connect to database -----------------------------------------------------
-
-#db <- dbConnect(drv="SQLite", dbname="reuters.db")
-db <- dbConnect(SQLite(), dbname="reuters.db")
-
-# get a list of all tables
-alltables = dbListTables(db)
-
-# *: id, article_id, content, pub_datetime, date_scraped, title, authors, raw_data, 
-# date stuff: https://sqlite.org/lang_datefunc.html
-
-# get the Articles as a data.frame
-#dbGetQuery(db,'SELECT * FROM Articles LIMIT 1' )$content # read 1st article
-#dbGetQuery(db, "SELECT * FROM Articles WHERE pub_datetime = '2015-01-03 23:51:00' ")
-#dbGetQuery(db, "SELECT content, title FROM Articles WHERE pub_datetime = BETWEEN date(
-#             '2015-01-03') AND date('2015-01-04') # doesn't work yet
-
-#test1 <- dbGetQuery(db, "SELECT content, title FROM Articles WHERE 
-#                    pub_datetime < datetime('2015-01-03 23:51:00','-1 day')")
-
-# alternative for later: determine ids with elastic and reference accordingly
-
-# 2008 and before no data \dots
-
-# restrict to a few articles to make analysis feasible
-OMO_20151217 <- dbGetQuery(db, "SELECT content, title, pub_datetime FROM Articles WHERE 
-                    pub_datetime BETWEEN datetime('2015-12-17 14:00:00','-5 day') 
-                    AND datetime('2015-12-17 14:00:00','+5 day')")
-setwd("C:/Users/Admin/Google Drive/Masterthesis")
-save(OMO_20151217,file="OMO_20151217.RData")
+##########################################################
+### --- Author: Manuel von Krosigk
+### --- Date: 2017-07-14
+### --- Description: structuring unstructured text files
+##########################################################
 
 # Manipulate for TA -------------------------------------------------------
 
@@ -65,7 +32,7 @@ writeLines(as.character(content[[23]])) # example
 library(textcat)
 all(textcat(content)=="english") # everything in english?
 content <- Corpus(VectorSource(OMO_20151217[which(
-                  textcat(content)=="english"),1])) 
+  textcat(content)=="english"),1])) 
 
 # POS tagging -------------------------------------------------------------
 # part of speech tagging, see Schweinberger(2016)
@@ -92,17 +59,17 @@ corpus.tmp    <- lapply(corpus.tmp, function(x){x <- as.String(x)})
 
 # apply annotators to Corpus
 Corpus.tagged <- lapply(corpus.tmp, function(x){
- sent_token_annotator <- Maxent_Sent_Token_Annotator()
- word_token_annotator <- Maxent_Word_Token_Annotator()
- pos_tag_annotator    <- Maxent_POS_Tag_Annotator()
- y1 <- annotate(x, list(sent_token_annotator,word_token_annotator))
- y2 <- annotate(x, pos_tag_annotator, y1)
- # y3 <- annotate (x, Maxent_POS_Tag_Annotator(probs = TRUE), y1)
- y2w  <- subset(y2, type == "word")
- tags <- sapply(y2w$features , '[[', "POS")
- r1 <- sprintf("%s/%s", x[y2w], tags)
- r2 <- paste(r1, collapse = " ")
- return(r2)}
+  sent_token_annotator <- Maxent_Sent_Token_Annotator()
+  word_token_annotator <- Maxent_Word_Token_Annotator()
+  pos_tag_annotator    <- Maxent_POS_Tag_Annotator()
+  y1 <- annotate(x, list(sent_token_annotator,word_token_annotator))
+  y2 <- annotate(x, pos_tag_annotator, y1)
+  # y3 <- annotate (x, Maxent_POS_Tag_Annotator(probs = TRUE), y1)
+  y2w  <- subset(y2, type == "word")
+  tags <- sapply(y2w$features , '[[', "POS")
+  r1 <- sprintf("%s/%s", x[y2w], tags)
+  r2 <- paste(r1, collapse = " ")
+  return(r2)}
 )
 
 # alternative: http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/
@@ -119,9 +86,9 @@ Tags_unique <- c("''", "-LRB-", "-RRB-", "$", ",", ":",  "``", "CC",
                  " RBR", "RBS", "RB", "RP", "SYM", "TO", "UH", "VBD",
                  "VBG", "VBN", "VBP", "VBZ", "VB","WDT", "WP$","WP", "WRB")
 Tags_keep    <- c(#"-LRB-", "-RRB-",
-                  "CC", "FW", "JJR", "JJS", "JJ", 
-                  "MD", "NNPS", "NNP", "NNS", "NN", "PDT", "RBR",
-                  "RBS", "RB", "VBD", "VBG", "VBN", "VBP", "VBZ", "VB")
+  "CC", "FW", "JJR", "JJS", "JJ", 
+  "MD", "NNPS", "NNP", "NNS", "NN", "PDT", "RBR",
+  "RBS", "RB", "VBD", "VBG", "VBN", "VBP", "VBZ", "VB")
 Tags_discard <- setdiff(Tags_unique,Tags_keep)
 
 #Corpus.tagged <- Corpus.tagged_backup
@@ -129,21 +96,21 @@ Tags_discard <- setdiff(Tags_unique,Tags_keep)
 # remove non-cruicial terms
 for(i in seq(Corpus.tagged)){
   for(j in seq(Tags_discard)){
-  Corpus.tagged[[i]] <- gsub(
-    paste(paste("\\b\\S+", Tags_discard[j], sep = ""),"\\b",sep=""), "", Corpus.tagged[[i]])
+    Corpus.tagged[[i]] <- gsub(
+      paste(paste("\\b\\S+", Tags_discard[j], sep = ""),"\\b",sep=""), "", Corpus.tagged[[i]])
   }
   #  Corpus.tagged[[i]] <- gsub("\\b\\S+CD\\b", "", Corpus.tagged[[i]]) #rm /CD manually
-#  Corpus.tagged[[i]] <- gsub(",/,", "", Corpus.tagged[[i]]) # rm ,/,
-#  Corpus.tagged[[i]] <- gsub("./.", "", Corpus.tagged[[i]]) # rm ./.
-#  Corpus.tagged[[i]] <- gsub("$", "", Corpus.tagged[[i]])   # rm $ -> doesn't work?
-#  Corpus.tagged[[i]] <- gsub("'", "", Corpus.tagged[[i]])   # rm '    
+  #  Corpus.tagged[[i]] <- gsub(",/,", "", Corpus.tagged[[i]]) # rm ,/,
+  #  Corpus.tagged[[i]] <- gsub("./.", "", Corpus.tagged[[i]]) # rm ./.
+  #  Corpus.tagged[[i]] <- gsub("$", "", Corpus.tagged[[i]])   # rm $ -> doesn't work?
+  #  Corpus.tagged[[i]] <- gsub("'", "", Corpus.tagged[[i]])   # rm '    
 } # alt. use tm_map to remove numbers and punctuation
 
 # remove ending from cruicial words
 for (i in seq(Corpus.tagged)){
   for(j in seq(Tags_keep)){  
-  Corpus.tagged[[i]] <- gsub(
-    paste("/", Tags_keep[j], sep = ""), "", Corpus.tagged[[i]])
+    Corpus.tagged[[i]] <- gsub(
+      paste("/", Tags_keep[j], sep = ""), "", Corpus.tagged[[i]])
   }
 }
 
@@ -222,9 +189,9 @@ setwd("C:/Users/Admin/Google Drive/Masterthesis")
 # Pre-process data alternative --------------------------------------------
 # create the toSpace content transformer
 toSpace <- content_transformer(
-            function(x, pattern){
-              return (gsub(pattern, " ", x))
-            })
+  function(x, pattern){
+    return (gsub(pattern, " ", x))
+  })
 
 # transform to lower case (need to wrap in content_transformer)
 content <- tm_map(content, content_transformer(tolower))
