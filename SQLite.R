@@ -118,7 +118,8 @@ Tags_unique <- c("''", "-LRB-", "-RRB-", "$", ",", ":",  "``", "CC",
                  "NNPS", "NNP", "NNS", "NN", "PDT", "POS", "PRP$", "PRP",
                  " RBR", "RBS", "RB", "RP", "SYM", "TO", "UH", "VBD",
                  "VBG", "VBN", "VBP", "VBZ", "VB","WDT", "WP$","WP", "WRB")
-Tags_keep    <- c("-LRB-", "-RRB-", "CC", "FW", "JJR", "JJS", "JJ", 
+Tags_keep    <- c(#"-LRB-", "-RRB-",
+                  "CC", "FW", "JJR", "JJS", "JJ", 
                   "MD", "NNPS", "NNP", "NNS", "NN", "PDT", "RBR",
                   "RBS", "RB", "VBD", "VBG", "VBN", "VBP", "VBZ", "VB")
 Tags_discard <- setdiff(Tags_unique,Tags_keep)
