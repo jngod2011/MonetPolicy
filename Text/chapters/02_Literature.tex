@@ -15,6 +15,7 @@ See \textcite{Mishkin.2007} and \textcite{Cecchetti.2006} \dots
 % why is this becoming more important and why can it be used for our purposes -> the Hess stuff
 % lots of things have been done wrt sentiment in terms of pos/neg - adjust for engod/exog
 % explain corpus
+% pre-processing: remove stopwords, stemming, fuzzy matching (not needed here), etc
 
 \subsection{Opinion Mining}
 
@@ -45,3 +46,6 @@ Multilevel latent categorization as described in \textcite{Guo.2009} uses Latent
 In order to extract the sentiment of a statement, an opinion lexicon has to be created which entails a list of words and expressions that are used to express people's subjective feelings and opinions. Apart from manually creating this list or access available dictionaries such as WordNet\textsuperscript{\textregistered} by \textcite{Fellbaum.1998}, it is possible to rely on syntactic patterns in large corpora as has been suggested in \textcite{Ding.2008,Hatzivassiloglou.1997,Kanayama.2006,Turney.2002,Yu.2003}. 
 
 Apart from the direct rating through so called regular opinions as laied out above, \textcite{Ding.2009,Ganapathibhotla.2008,Jindal.2006}, among others, analyse comparative opinions. Since the latter is of merely of subordinate use for the classification of monetary policy task, we refer the reader to \textcite{Liu.2012} for an overview of the topic. 
+
+%
+As pointed out in \textcite{Hu.2004}, two techniques are most widely spread when it comes to discovering terms in corpora. Symbolic approaches that are based on terms such as noun phrases and their syntactic description encompass the first, statistical approaches the second while the latter make use of the fact that words composing a term a in close proximity to each other and reoccur. 
