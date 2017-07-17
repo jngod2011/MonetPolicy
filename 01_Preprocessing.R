@@ -83,12 +83,12 @@ Corpus.tagged_backup <- Corpus.tagged
 Tags_unique <- c("''", "-LRB-", "-RRB-", "$", ",", ":",  "``", "CC",
                  "CD", "DT", "EX", "FW", "IN", "JJR", "JJS", "JJ", "MD", 
                  "NNPS", "NNP", "NNS", "NN", "PDT", "POS", "PRP$", "PRP",
-                 " RBR", "RBS", "RB", "RP", "SYM", "TO", "UH", "VBD",
+                 "RBR", "RBS", "RB", "RP", "SYM", "TO", "UH", "VBD",
                  "VBG", "VBN", "VBP", "VBZ", "VB","WDT", "WP$","WP", "WRB")
 Tags_keep    <- c(#"-LRB-", "-RRB-",
-  "CC", "FW", "JJR", "JJS", "JJ", 
-  "MD", "NNPS", "NNP", "NNS", "NN", "PDT", "RBR",
-  "RBS", "RB", "VBD", "VBG", "VBN", "VBP", "VBZ", "VB")
+                "CC", "FW", "JJR", "JJS", "JJ", 
+                "MD", "NNPS", "NNP", "NNS", "NN", "PDT", "RBR",
+                "RBS", "RB", "VBD", "VBG", "VBN", "VBP", "VBZ", "VB")
 Tags_discard <- setdiff(Tags_unique,Tags_keep)
 
 #Corpus.tagged <- Corpus.tagged_backup
@@ -106,7 +106,7 @@ for(i in seq(Corpus.tagged)){
   #  Corpus.tagged[[i]] <- gsub("'", "", Corpus.tagged[[i]])   # rm '    
 } # alt. use tm_map to remove numbers and punctuation
 
-# remove ending from cruicial words
+# remove tags from cruicial words
 for (i in seq(Corpus.tagged)){
   for(j in seq(Tags_keep)){  
     Corpus.tagged[[i]] <- gsub(
@@ -131,7 +131,13 @@ Corpus.untagged <- tm_map(Corpus.untagged, removeNumbers)
 #Corpus.untagged <- tm_map(Corpus.untagged, tolower) # content_transformer(tolower)?
 Corpus.untagged <- tm_map(Corpus.untagged, content_transformer(tolower))
 
-# discard stopwords?
+# how to best discard stopwords so no ambiguous words get deleted?
+stpw1  <- stopwords('english') # any words with ambiguous meaning in context?
+stpw2  <- scan(file='data/MyStopwords.txt', what='character',
+               quiet=T) # own stop words
+comn    <- unique(c(stpw1,stpw2)) # select unique stopwords
+mystopwords <- unique(c(gsub("'","",comn),comn)) # final stop word list
+Corpus.untagged <- tm_map(Corpus.untagged, removeWords, mystopwords)
 
 # remove unnecessary whitespace TO LIST OR TO CORPUS?
 Corpus.untagged <- tm_map(Corpus.untagged, stripWhitespace)
@@ -149,7 +155,7 @@ Corpus.untagged <- tm_map(Corpus.untagged, stripWhitespace)
 #writeLines(as.character(content[[23]]))
 
 
-## not implemented yet
+## not implemented yet -> put in earlier
 # combine words that should stay together ! TO BE EXTENDED
 for (j in seq(Corpus.untagged)){
   Corpus.untagged[[j]] <- gsub("percentage point", "percentagepoint", Corpus.untagged[[j]])
@@ -184,7 +190,7 @@ articles <- laply(Corpus.untagged, function(t){as.character(t)})
 
 # export text body
 setwd("C:/Users/Admin/Google Drive/Masterthesis")
-#save(Corpus.untagged,file="data/texts/20151217_Corpus_Clean.RData")
+#save(Corpus.untagged, file="data/texts/20151217_Corpus_Clean.RData")
 
 # Pre-process data alternative --------------------------------------------
 # create the toSpace content transformer

@@ -14,6 +14,7 @@
 setwd("C:/Users/Admin/Google Drive/Masterthesis")
 #load("data/texts/20151217_ContentClean.RData") # articles +/- 5 days around OMO 20151217
 # error?
+content <- Corpus.untagged # decide on terminoligy later
 
 # DTM ---------------------------------------------------------------------
 
@@ -39,11 +40,11 @@ dtm       <- DocumentTermMatrix(content)
 freq    <- colSums(as.matrix(dtm)) # frequency of occurrence of each word
 length(freq) # check: total number of words
 ord     <- order(freq,decreasing=TRUE) # descending order of word frequency
-freq[head(ord)] # most frequent words
+freq[head(ord,20)] # most frequent words
 freq[tail(ord)] # least frequent words
 
 # include words that occur in 10 to 300 documents & min and max length of word
-dtmr    <- DocumentTermMatrix(content, control=list(wordLengths=c(4, 20), 
+dtmr    <- DocumentTermMatrix(content, control=list(wordLengths=c(5, 35), 
                                                     bounds = list(global = c(20,1900)))) 
 # ! arbitrary amount here, change once only relevant articles are considered
 
@@ -58,7 +59,7 @@ ordr      <- order(freqr,decreasing=TRUE) # descending order of word frequency
 freqr[head(ordr)] # most frequent words
 freqr[tail(ordr)] # least frequent words
 
-findFreqTerms(dtmr,lowfreq=200) # all terms that appear 200 times
+findFreqTerms(dtmr,lowfreq=20) # all terms that appear 200 times
 
 # check for: correlation (co-occurrence of words in multiple documents) 
 # -> indicator for reaction to event?
@@ -81,7 +82,7 @@ library(ggplot2)
 library(wordcloud)
 
 wf  <- data.frame(term=names(freqr), occurrences=freqr) # term and occurence as col name
-p   <- ggplot(subset(wf, freqr>1500), aes(term, occurrences)) # plot terms with freq >20
+p   <- ggplot(subset(wf, freqr>20), aes(term, occurrences)) # plot terms with freq >20
 p   <- p + geom_bar(stat="identity") # height of each bar is proportional to data value mapped to y-axis 
 p   <- p + theme(axis.text.x=element_text(angle=45, hjust=1)) # x-axis labels 45°
 p
@@ -139,7 +140,7 @@ k       <- 4 # try different ones
 
 # Run LDA using Gibbs sampling
 ldaOut  <- LDA(dtm,k, method='Gibbs', control=list(nstart=nstart, 
-                                                   seed = seed, best=best, burnin = burnin, iter = iter, thin=thin))
+                    seed = seed, best=best, burnin = burnin, iter = iter, thin=thin))
 
 # docs to topics
 ldaOut.topics <- as.matrix(topics(ldaOut))
@@ -167,10 +168,10 @@ topic2ToTopic3 <- lapply(1:nrow(dtm),function(x)
 
 # Classification Function -------------------------------------------------
 
-# simplify format of 'content' object
+# Corpus in character format for classification function
 library(plyr)
-articles <- laply(content, function(t){as.character(t)})
-head(articles, 5)
+articles <- laply(Corpus.untagged, function(t){as.character(t)})
+head(articles, 3)
 
 # mon. policy responds to econ developments
 endog.words <- scan(file='data/EndogenousWords.txt', what='character',quiet=T)
