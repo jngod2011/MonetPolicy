@@ -29,3 +29,12 @@ In order to identify the sentiment of each text piece as endogenous or exogenous
 % Describe pre-processing process top down
 % sufficient for our purposes to look for simple quant occurence of expressions, classification w/o increments as in rating
 % always has to be trained for specific purpose (c.f. every product needs new algorithm when rated)
+
+% reverse the polarity of a sentiment word whenever it is preceded by a negation.
+
+% use dimension correlation as in \textcite{Godbole.2007} for the descriptive stats
+
+% document based sentiment (in contrast to sentence-specific sentiment or aspect-specifi sentiment) as described in \texcite{Silge.2017} accompanied by their publish \textit{R} package \textcite{tidytextpackage}
+% tf-itf: https://cran.r-project.org/web/packages/tidytext/vignettes/tf_idf.html is used instead of stopword stripping but we don't do that since we pre-select articles s.t. content is similar
+
+% Dictionary-based methods like the ones we are discussing find the total sentiment of a piece of text by adding up the individual sentiment scores for each word in the text. (http://tidytextmining.com/sentiment.html)

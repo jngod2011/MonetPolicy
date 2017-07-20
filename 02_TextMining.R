@@ -76,6 +76,13 @@ findAssocs(dtmr,"employment", 0.8)
 
 # add cluster analysis and tokenization (e.g. bigrams)
 
+# from https://stats.stackexchange.com/questions/78321/term-frequency-inverse-document-frequency-tf-idf-weighting
+#creating term matrix with TF-IDF weighting
+terms <-DocumentTermMatrix(corpus,control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE)))
+
+#or compute cosine distance among documents
+dissimilarity(tdm, method = "cosine")
+
 # Graphics ----------------------------------------------------------------
 
 library(ggplot2)
