@@ -224,6 +224,7 @@ score.sentiment <- function(input, endog.words, exog.words, .progress='none'){
     score = sum(endog.matches) - sum(exog.matches)
     
     return(score)
+    # also return endog matches, exog matches and whether difference is significant
   }, 
   endog.words, exog.words, .progress=.progress)
   

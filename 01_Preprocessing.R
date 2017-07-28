@@ -131,6 +131,8 @@ Corpus.untagged <- tm_map(Corpus.untagged, removeNumbers)
 #Corpus.untagged <- tm_map(Corpus.untagged, tolower) # content_transformer(tolower)?
 Corpus.untagged <- tm_map(Corpus.untagged, content_transformer(tolower))
 
+# stopwords or tf-idf, c.f. http://tidytextmining.com/tfidf.html (important words in all docs!)
+
 # how to best discard stopwords so no ambiguous words get deleted?
 stpw1  <- stopwords('english') # any words with ambiguous meaning in context?
 stpw2  <- scan(file='data/MyStopwords.txt', what='character',
