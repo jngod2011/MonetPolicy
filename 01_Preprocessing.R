@@ -11,21 +11,42 @@
 # Manipulate for TA -------------------------------------------------------
 
 setwd("C:/Users/Admin/Google Drive/Masterthesis")
+
+library(tm)
+
+## OMO before 2007:
+#content <- Corpus(DirSource("data/articles_2001_2007/2001_12_11")) # does not read neat
+pathname <- "/data/articles_2001_2007/2001_12_11/"
+
+# load files into corpus
+# get listing of .txt files in directory
+filenames <- list.files(paste0(getwd(), pathname),pattern='*.txt')
+
+library(readr)
+# read files into a character vector
+#files <- lapply(paste0(paste0(getwd(), pathname),filenames),readLines)
+files <- lapply(paste0(paste0(getwd(), pathname),filenames),read_file)
+
+# create corpus from vector
+content <- Corpus(VectorSource(files))
+##
+
+## OMO after 2007:
 load("OMO_20151217_short.RData") # articles +/- 5 days around OMO 20151217
 min(OMO_20151217[,3]) # first article
 max(OMO_20151217[,3]) # last article 
 
-library(tm)
 # maybe smoother with "DirSource(directory = "texts/",encoding ="latin1" )"
-title   <- Corpus(VectorSource(OMO_20151217[,2])) 
+#title   <- Corpus(VectorSource(OMO_20151217[,2])) # discard?
 content <- Corpus(VectorSource(OMO_20151217[,1]))
+
 
 #summary(content)[1:10,]
 # add title to content column -> slow
 #transform(OMO_20151217, newcol=paste(OMO_20151217[,2], OMO_20151217[,1], sep=" "))
 
 # inspect(title)
-writeLines(as.character(title[[23]])) # example
+#writeLines(as.character(title[[23]]))
 writeLines(as.character(content[[23]])) # example
 
 # detect text language
@@ -157,28 +178,22 @@ Corpus.untagged <- tm_map(Corpus.untagged, stripWhitespace)
 #writeLines(as.character(content[[23]]))
 
 
-## not implemented yet -> put in earlier
-# combine words that should stay together ! TO BE EXTENDED
-for (j in seq(Corpus.untagged)){
-  Corpus.untagged[[j]] <- gsub("percentage point", "percentagepoint", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("economic recovery", "economicrecovery", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("janet yellen", "janetyellen", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("federal reserve bank", "fed", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("federal reserve", "fed", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("federal funds rate target", "federalfundsratetarget", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("monetary policy", "monetarypolicy", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("unemployment rate", "unemploymentrate", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("central bank", "centralbank", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("rates", "rate", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("economic", "econom", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("economy", "econom", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("last week", "lastweek", Corpus.untagged[[j]])
-  Corpus.untagged[[j]] <- gsub("next week", "nextweek", Corpus.untagged[[j]]) 
-  Corpus.untagged[[j]] <- gsub("part time", "parttime", Corpus.untagged[[j]]) 
-  Corpus.untagged[[j]] <- gsub("schools", "school", Corpus.untagged[[j]]) 
-  Corpus.untagged[[j]] <- gsub("funds", "fund", Corpus.untagged[[j]]) 
-} # add phrases that indicate endog and exog
-## not implemented yet
+# put in earlier?
+# combine words that should stay together
+comb.phrases <- scan(file='data/CombPhrases.txt', what='character',quiet=T,sep=",")
+for(j in seq(Corpus.untagged)){
+  # n-grams
+  for(i in seq(comb.phrases)){# substitute phrase without space
+  Corpus.untagged[[j]]$content <- gsub(comb.phrases[i], 
+                               gsub(" ","",comb.phrases[i]), Corpus.untagged[[j]]$content)
+  }
+  # stemming problems by hand
+  Corpus.untagged[[j]]$content <- gsub("rates", "rate", Corpus.untagged[[j]]$content)
+  Corpus.untagged[[j]]$content <- gsub("economic", "econom", Corpus.untagged[[j]]$content)
+  Corpus.untagged[[j]]$content <- gsub("economy", "econom", Corpus.untagged[[j]]$content)
+  Corpus.untagged[[j]]$content <- gsub("schools", "school", Corpus.untagged[[j]]$content) 
+  Corpus.untagged[[j]]$content <- gsub("funds", "fund", Corpus.untagged[[j]]$content) 
+} # $content so the meta data does not change, important for character transformation
 
 # stemming -> deterministic or statistical
 # library(Rstem) # needs C/C++/Fortran

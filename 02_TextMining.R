@@ -181,10 +181,10 @@ articles <- laply(Corpus.untagged, function(t){as.character(t)})
 head(articles, 3)
 
 # mon. policy responds to econ developments
-endog.words <- scan(file='data/EndogenousWords.txt', what='character',quiet=T)
+endog.words <- stemDocument(scan(file='data/EndogenousWords.txt', what='character',quiet=T))
 # mon. policy responds to change in policy preferences
-exog.words  <- scan(file='data/ExogenousWords.txt', what='character',quiet=T)
-
+exog.words  <- stemDocument(scan(file='data/ExogenousWords.txt', what='character',quiet=T))
+# indication that will be for a while indicator for exog!
 
 # write score sentiment function
 score.sentiment <- function(input, endog.words, exog.words, .progress='none'){
@@ -221,14 +221,18 @@ score.sentiment <- function(input, endog.words, exog.words, .progress='none'){
     exog.matches = !is.na(exog.matches)
     
     # and conveniently enough, TRUE/FALSE will be treated as 1/0 by sum():
-    score = sum(endog.matches) - sum(exog.matches)
+#    score = sum(endog.matches) - sum(exog.matches)
+    score = c(sum(endog.matches), sum(exog.matches), sum(endog.matches) - sum(exog.matches))
     
     return(score)
-    # also return endog matches, exog matches and whether difference is significant
+    #return(sum(endog.matches))
+    #return(sum(exog.matches))    
   }, 
   endog.words, exog.words, .progress=.progress)
   
-  scores.df = data.frame(score=scores, text=input)
+#  scores.df = data.frame(score=scores, text=input)
+  scores.df = data.frame(total.score=scores[,3], endog.score=scores[,1], 
+                         exog.score=scores[,2], text=input)  
   return(scores.df)
 }
 
@@ -238,6 +242,28 @@ sample <- c("for inflation to remain on the same level","a new objective functio
 
 results <- score.sentiment(input=sample, endog.words, exog.words)
 class(results)
-results$score # >0 means endog, <0 means exog, 0 means unclassified
+str(results)
+results$total.score # >0 means endog, <0 means exog, 0 means unclassified
+results$endog.score
+results$exog.score
+results[,1:3]
+
+# decision rule whether the OMO is classified as endog or exog: stat comp of means
+conf.level <- 0.05
+if(
+  t.test(results$endog.score,results$exog.score, alternative="greater", 
+       mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value
+  < conf.level){
+  print("Endogenous")
+  } else{
+  if(
+    t.test(results$endog.score,results$exog.score, alternative="less", 
+        mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value
+    < conf.level){
+    print("Exogenous")
+  } else{
+    print("Ambiguous")
+  }
+}
 
 # End ---------------------------------------------------------------------
