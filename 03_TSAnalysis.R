@@ -13,7 +13,7 @@
 # rm(list=ls())
 # setwd("C:/Users/Admin/Google Drive/Masterthesis")
 # install.packages(c("httr", "XML"), repos = "http://cran.us.r-project.org")
-library(stargazer)
+#library(stargazer)
 library(xtable)
 #library(httr)
 #library(XML)
@@ -89,7 +89,64 @@ plot(TargetRates[,1],TargetRates[,2],type='l',xlab="Date",
      ylab="Interest Rates",col='cornflowerblue')              # lower bound
 lines(TargetRates[,1],TargetRates[,3], col='cornflowerblue')  # upper bound
 
-# add decisions where nothing was changed for analysis!
+# add decisions where nothing was changed for analysis?
+
+
+# Policy Days vs Normal Days ----------------------------------------------
+
+DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
+                               diff(as.matrix(YieldCurves[,2:ncol(YieldCurves)])),NA,NA)
+colnames(DeltaYieldCurves) <- c("Date","d1M","d3M","d6M","d1Y","d2Y","d3Y","d5Y","d7Y",
+                                "d10Y","d20Y","d30Y","NP","P")
+
+for(i in 1:nrow(DeltaYieldCurves)){
+  if(length(which(OMO[,1]==DeltaYieldCurves[i,1])) == 0)
+    DeltaYieldCurves[i,ncol(DeltaYieldCurves)]  <- 0
+  else
+    DeltaYieldCurves[i,ncol(DeltaYieldCurves)]  <- 1
+}
+DeltaYieldCurves[,ncol(DeltaYieldCurves)-1]  <- 1-DeltaYieldCurves[,ncol(DeltaYieldCurves)]
+
+# replicate Non-policy vs policy day regression table from ES, p. 10
+Tab_NPvsPdays <- matrix(nrow=10-1-1,ncol=10)
+library(car)
+Tab_NPvsPdays[,1] <- c("$\\alpha_n$", "", "$\\beta_n^{NP}$", "", "$\\beta_n^P$", "",
+                       "$\\bar{R}^2$","$\\beta_n^{NP}$ = $\\beta_n^P$")
+colnames(Tab_NPvsPdays) <- c(" ","6m","1y","2y","3y","5y","7y","10y","20y","30y")
+
+for(k in 4:(ncol(DeltaYieldCurves)-2)){
+  # regress change in n-maturity on NP-dummy*delta3m and P-dummy*delta3m    
+  myreg <- lm(DeltaYieldCurves[,k]~DeltaYieldCurves$d3M:DeltaYieldCurves$NP + 
+                DeltaYieldCurves$d3M:DeltaYieldCurves$P)
+  # fill table
+    j = k+1-3 
+    Tab_NPvsPdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
+    Tab_NPvsPdays[2,j]  <- paste0("(", format(unlist(
+                            formatC(abs(round(summary(myreg)$coef[1,2],2)),format="f",digits=2)
+                                      )),")") # std intercept
+    Tab_NPvsPdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
+    Tab_NPvsPdays[4,j]  <- paste0("(", format(unlist(
+                            formatC(abs(round(summary(myreg)$coef[2,2],2)),format="f",digits=2)
+                                      )),")") # std beta NP
+    Tab_NPvsPdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta P
+    Tab_NPvsPdays[6,j]  <- paste0("(", format(unlist(
+                            formatC(abs(round(summary(myreg)$coef[3,2],2)),format="f",digits=2)
+                                      )),")") # std beta P
+    Tab_NPvsPdays[7,j]  <- round(summary(myreg)$r.squared,2) # R^2
+  # add D-W statistic?
+    Tab_NPvsPdays[8,j]  <- round(linearHypothesis(myreg,
+          "DeltaYieldCurves$d3M:DeltaYieldCurves$NP=DeltaYieldCurves$d3M:DeltaYieldCurves$P")$Pr[2],2)
+}
+# export table to latex format
+library(xtable)
+print(xtable(Tab_NPvsPdays, align="lrrrrrrrrrr", digits=2, type="latex", 
+      caption="Yield curve response to short rate movements on policy days and non-policy days.",
+      label = "tab:NPvsPdays"), 
+      sanitize.text.function = function(x){x}, include.rownames=F,
+      booktabs=TRUE, caption.placement="top", 
+      file="Text/chapters/tables_graphs/NPvsPdays.tex")
+
+# Old Stuff ---------------------------------------------------------------
 
 # FOMC Dates - Full History Web Scrape ------------------------------------
 

@@ -6,6 +6,7 @@ update
 surprise
 longerperiod
 longertime
+longterm
 foreseeablefuture
 significanttime
 forawhile
@@ -15,3 +16,8 @@ moreaggressive
 lessaggressive
 wontremain
 willnotremain
+agressive
+cautious
+inflation
+output
+ahead

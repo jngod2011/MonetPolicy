@@ -236,6 +236,8 @@ score.sentiment <- function(input, endog.words, exog.words, .progress='none'){
   return(scores.df)
 }
 
+# maybe take number of words per article into account as well to detect outliers
+
 # algorithm sanity check 
 sample <- c("for inflation to remain on the same level","a new objective function",
             "We do not care about what what is happening at all")

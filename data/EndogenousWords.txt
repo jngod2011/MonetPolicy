@@ -18,3 +18,5 @@ growth
 slowgrowth
 lowgrowth
 highgrowth
+unemployment
+productivity
