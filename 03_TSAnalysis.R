@@ -134,8 +134,9 @@ for(k in 4:(ncol(DeltaYieldCurves)-2)){
                                       )),")") # std beta P
     Tab_NPvsPdays[7,j]  <- round(summary(myreg)$r.squared,2) # R^2
   # add D-W statistic?
-    Tab_NPvsPdays[8,j]  <- round(linearHypothesis(myreg,
-          "DeltaYieldCurves$d3M:DeltaYieldCurves$NP=DeltaYieldCurves$d3M:DeltaYieldCurves$P")$Pr[2],2)
+    Tab_NPvsPdays[8,j]  <- formatC(abs(round(linearHypothesis(myreg,
+          "DeltaYieldCurves$d3M:DeltaYieldCurves$NP=DeltaYieldCurves$d3M:DeltaYieldCurves$P")$Pr[2
+                                      ],2)),format="f",digits=2)
 }
 # export table to latex format
 library(xtable)
