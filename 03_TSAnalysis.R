@@ -11,7 +11,7 @@
 # Misc --------------------------------------------------------------------
 
 # rm(list=ls())
-# setwd("C:/Users/Admin/Google Drive/Masterthesis")
+setwd("C:/Users/Admin/Google Drive/Masterthesis")
 # install.packages(c("httr", "XML"), repos = "http://cran.us.r-project.org")
 #library(stargazer)
 library(xtable)
@@ -146,6 +146,41 @@ print(xtable(Tab_NPvsPdays, align="lrrrrrrrrrr", digits=2, type="latex",
       sanitize.text.function = function(x){x}, include.rownames=F,
       booktabs=TRUE, caption.placement="top", 
       file="Text/chapters/tables_graphs/NPvsPdays.tex")
+
+
+# Get classification ------------------------------------------------------
+
+setwd("C:/Users/Admin/Google Drive/Masterthesis")
+
+# Get functions
+MyProcFct   <- dget("functions/MyProcFct.R")
+MyClassFct  <- dget("functions/MyClassFct.R")
+
+# Get input to functions
+mystopwords <- scan(file='data/MyStopwords.txt', what='character',
+                    quiet=T) # own stop words
+myngrams    <- scan(file='data/CombPhrases.txt', what='character',quiet=T,sep=",")
+# List of phrases  to determine classification of corpus
+# Mon. policy responses to econ developments
+endog.words <- stemDocument(scan(file='data/EndogenousWords.txt', 
+                                 what='character',quiet=T))
+# Mon. policy responses to change in policy preferences
+exog.words  <- stemDocument(scan(file='data/ExogenousWords.txt', 
+                                 what='character',quiet=T))
+conf.level  <- 0.05 # confidence level
+
+for(i in 2:nrow(OMO)){ # get Yield Curve data for 2001 & 2017 as well
+
+  # get corpus
+  pathname    <- paste0(paste0("/data/articles_2001_2007/",OMO$Date[i]),"/")
+  Corpus      <- MyProcFct(path=pathname,mystopwords=mystopwords,myngrams=myngrams)
+  
+  # determine classification and store in table
+
+  OMO$Classification[i] <-  MyClassFct(
+                              Corpus.untagged=Corpus, endog.words=endog.words, 
+                              exog.words=exog.words, conf.level=conf.level)
+}
 
 # Old Stuff ---------------------------------------------------------------
 

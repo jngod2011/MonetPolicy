@@ -255,6 +255,8 @@ results[,1:3]
 # compare decisions
 TabScore <- as.data.frame(matrix(nrow=nrow(results),ncol=3, data=NA))
 colnames(TabScore) <- c("Class", "Endog", "Exog")
+
+# no t-test for >/< 0:
 for(i in 1:nrow(results)){
   if(results[i,1] > 0){
     TabScore[i,1] <- "Endog"
@@ -288,9 +290,8 @@ if(
   }
 }
 
-
 # compare appearances
-conf.level <- 0.05
+conf.level <- 0.05 # .1 alternatively
 if(
   t.test(results$endog.score,results$exog.score, alternative="greater", 
        mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value

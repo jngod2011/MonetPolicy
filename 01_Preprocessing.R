@@ -16,7 +16,7 @@ library(tm)
 
 ## OMO before 2007:
 #content <- Corpus(DirSource("data/articles_2001_2007/2001_12_11")) # does not read neat
-pathname <- "/data/articles_2001_2007/2001_12_11/"
+pathname <- "/data/articles_2001_2007/2015-12-16/"
 
 # load files into corpus
 # get listing of .txt files in directory
@@ -24,8 +24,9 @@ filenames <- list.files(paste0(getwd(), pathname),pattern='*.txt')
 
 library(readr)
 # read files into a character vector
-#files <- lapply(paste0(paste0(getwd(), pathname),filenames),readLines)
-files <- lapply(paste0(paste0(getwd(), pathname),filenames),read_file)
+files <- lapply(paste0(paste0(getwd(), pathname),filenames),readLines)
+for(i in seq(files)){files[i]  <- paste(files[i])}
+#files <- lapply(paste0(paste0(getwd(), pathname),filenames),read_file)
 
 # create corpus from vector
 content <- Corpus(VectorSource(files))
@@ -200,7 +201,7 @@ for(j in seq(Corpus.untagged)){
 # lemmatisation: https://cran.r-project.org/web/packages/openNLP/openNLP.pdf
 Corpus.untagged <- tm_map(Corpus.untagged,stemDocument)
 
-writeLines(as.character(Corpus.untagged[[24]])) # inspect
+writeLines(as.character(Corpus.untagged[[1]])) # inspect
 
 # for further analysis try
 articles <- laply(Corpus.untagged, function(t){as.character(t)})
