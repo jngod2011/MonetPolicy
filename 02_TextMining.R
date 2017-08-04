@@ -236,7 +236,8 @@ score.sentiment <- function(input, endog.words, exog.words, .progress='none'){
   return(scores.df)
 }
 
-# maybe take number of words per article into account as well to detect outliers
+# maybe take number of words per article into account as well to detect outliers 
+# and/or determine class on article level and then compare (done below)
 
 # algorithm sanity check 
 sample <- c("for inflation to remain on the same level","a new objective function",
@@ -251,6 +252,44 @@ results$exog.score
 results[,1:3]
 
 # decision rule whether the OMO is classified as endog or exog: stat comp of means
+# compare decisions
+TabScore <- as.data.frame(matrix(nrow=nrow(results),ncol=3, data=NA))
+colnames(TabScore) <- c("Class", "Endog", "Exog")
+for(i in 1:nrow(results)){
+  if(results[i,1] > 0){
+    TabScore[i,1] <- "Endog"
+    TabScore[i,2] <- 1
+    TabScore[i,3] <- 0    
+  }
+  if(results[i,1] < 0){
+    TabScore[i,1] <- "Exog"
+    TabScore[i,2] <- 0
+    TabScore[i,3] <- 1
+  }
+  if(results[i,1] == 0){
+    TabScore[i,1] <- "Ambiguous"
+  }
+}
+
+conf.level <- 0.05 # 0.1 alternatively
+if(
+  t.test(TabScore$Endog,TabScore$Exog, alternative="greater", 
+         mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value <
+   conf.level){
+  print("Endogenous")
+} else{
+  if(
+    t.test(TabScore$Endog,TabScore$Exog, alternative="less", 
+           mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value <
+     conf.level){
+    print("Exogenous")
+  } else{
+    print("Ambiguous")
+  }
+}
+
+
+# compare appearances
 conf.level <- 0.05
 if(
   t.test(results$endog.score,results$exog.score, alternative="greater", 
