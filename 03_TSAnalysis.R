@@ -41,11 +41,12 @@ colnames(YieldCurves) <- c("Date","1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y",
 OMO                       <- read.csv(file="data/FED_OpenMarket_Operations.csv", 
                                     header=TRUE, sep=";", na.strings =".", 
                                     stringsAsFactors=FALSE)
-OMO[,1]                   <- as.Date(OMO[,1],"%Y-%m-%d") 
-colnames(OMO)             <- c("Date","Scheduled","Target_l", "Target_h", "Change_l", 
-                               "Change_h",
+colnames(OMO)             <- c("Date","Scheduled","$Tgt_{low}$", "$Tgt_{high}$", "$\\Delta_{low}$", 
+                               "$\\Delta_{high}$",
                                "1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","20Y",
                                "30Y", "Classification")
+OMO$Date                   <- as.Date(OMO$Date,"%Y-%m-%d") 
+
 # fill Yield Curve data into OMO dates
 for(i in 1:nrow(OMO)){
   if(!length(which(OMO[i,1]==YieldCurves[,1]))==T){# NA when date is not given
@@ -92,6 +93,158 @@ lines(TargetRates[,1],TargetRates[,3], col='cornflowerblue')  # upper bound
 # add decisions where nothing was changed for analysis?
 
 
+# Get classification ------------------------------------------------------
+
+setwd("C:/Users/Admin/Google Drive/Masterthesis")
+
+# Get functions
+MyProcFct   <- dget("functions/MyProcFct.R")
+MyClassFct  <- dget("functions/MyClassFct.R")
+
+# Get input to functions
+mystopwords <- scan(file='data/MyStopwords.txt', what='character',
+                    quiet=T) # own stop words
+myngrams    <- scan(file='data/CombPhrases.txt', what='character',quiet=T,sep=",")
+
+# derive corpi from articles per OMO
+OMOdates <- OMO[2:33,1] # the ones where we have yield curve data
+path         <- "/data/articles_2001_2007"
+GetCorpus <- function(OMOdate, path){
+  cl.dir <- paste0(sprintf("%s/%s",path, OMOdate),"/")
+  cl.cor <- MyProcFct(path=cl.dir,mystopwords=mystopwords,myngrams=myngrams)
+  result <- list(name = OMOdate, corp = cl.cor)
+}
+Corpi   <- lapply(OMOdates, GetCorpus, path=path)
+#save(Corpi,file="Corpi_Factive.RData")
+
+# determine sentiment of every OMO
+# List of phrases  to determine classification of corpus
+# Mon. policy responses to econ developments
+endog.words <- stemDocument(scan(file='data/EndogenousWords.txt', 
+                                 what='character',quiet=T))
+# Mon. policy responses to change in policy preferences
+exog.words  <- stemDocument(scan(file='data/ExogenousWords.txt', 
+                                 what='character',quiet=T))
+# set confidence level
+conf.level  <- 0.05
+
+GetClassification <- function(Corpus, path){
+  MyClassFct(
+    Corpus.untagged=Corpus, endog.words=endog.words, 
+    exog.words=exog.words, conf.level=conf.level)
+  return()
+}
+
+# loop to fill last OMO column with classification
+for(i in 2:(nrow(OMO)-1)){ # FIX NUMBERING WHEN ALL DATA AVAILABLE
+  Corpus=Corpi[[i-1]]$corp
+  # determine classification and store in table
+  OMO$Classification[i] <-  MyClassFct(
+        Corpus.untagged=Corpus, endog.words=endog.words, 
+        exog.words=exog.words, conf.level=conf.level)$Classification
+}
+
+# ML classification -------------------------------------------------------
+
+setwd("C:/Users/Admin/Google Drive/Masterthesis")
+MyProcFct   <- dget("functions/MyProcFct.R")
+mystopwords <- scan(file='data/MyStopwords.txt', what='character',
+                    quiet=T) # own stop words
+myngrams    <- scan(file='data/CombPhrases.txt', what='character',quiet=T,sep=",")
+
+## TRAINING SET
+# build TDM
+path        <- "/data"
+sentiments  <- c("Endog","Exog")
+generateTDM <- function(sentiment, path){
+  cl.dir <- paste0(sprintf("%s/Training_%s",path, sentiment),"/")
+  cl.cor <- MyProcFct(path=cl.dir,mystopwords=mystopwords,myngrams=myngrams)
+  cl.tdm <- TermDocumentMatrix(cl.cor)
+  #cl.tdm <- removeSparseTerms(cl.tdm, 0.7)
+  result <- list(name = sentiment, tdm = cl.tdm)
+}
+
+tdm_test <- lapply(sentiments, generateTDM, path=path)
+
+## ACTION SET
+#OMOdates = OMO[2:nrow(OMO),1]
+#path         <- "/data/articles_2001_2007"
+generateTDM2 <- function(Corpus){
+  #cl.dir <- paste0(sprintf("%s/%s",path, OMOdate),"/")
+  #cl.cor <- MyProcFct(path=cl.dir,mystopwords=mystopwords,myngrams=myngrams)
+  cl.cor <- Corpus$corp
+  OMOdate <- Corpus$name
+  cl.tdm <- TermDocumentMatrix(cl.cor)
+  #cl.tdm <- removeSparseTerms(cl.tdm, 0.7)
+  result <- list(name = OMOdate, tdm = cl.tdm)
+}
+
+#load("Corpi_Factiva.RData")
+tdm_act <- lapply(Corpi, generateTDM2)
+
+## COMBINE both
+tdm_comb <- append(tdm_test,tdm_act)
+
+bindClassToTDM <- function(tdm){
+  cl.mat <- t(data.matrix(tdm[["tdm"]]))
+  cl.df <- as.data.frame(cl.mat, stringsAsFactors = F)
+  
+  cl.df <- cbind(cl.df, rep(tdm[["name"]], nrow(cl.df)))
+  colnames(cl.df)[ncol(cl.df)] <- "targetclass"
+  return(cl.df)
+}
+
+classTDM <- lapply(tdm_comb, bindClassToTDM)
+
+# stack
+tdm.stack <- do.call(rbind.fill, classTDM)
+tdm.stack[is.na(tdm.stack)] <- 0 
+nrow(tdm.stack) # total number of docs
+ncol(tdm.stack) # total terms
+
+# prediction
+tdm.class <- tdm.stack[,"targetclass"]
+tdm.class <- tdm.class[tdm.class=="Endog" | tdm.class=="Exog"]
+tdm.stack.nl <- tdm.stack[,!colnames(tdm.stack)%in%"targetclass"]
+
+library(class)
+knn.pred <- knn(tdm.stack.nl[seq(tdm.class),], # train set w/o classification
+                tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],], # action set
+                tdm.class) # classification for training set
+
+# get date of article and attach KNN prediction
+ArticleDates <- tdm.stack[,"targetclass"]
+ArticleDates <- ArticleDates[ArticleDates!="Endog" & ArticleDates!="Exog"]
+
+# MAKE THIS NICER WITH THE OTHER CLASSIFICATIONS IN THE TABLE
+# decision table
+tmp_KNN.pred.tab  <- data.frame("Date"=ArticleDates, "KNN.class"= knn.pred)
+
+KNNClassTab  <- data.frame("Date"= OMO$Date[2:33],"KNN.Endog"=NA,"KNN.Exog"=NA, "KNN.Class"=NA)
+
+for(i in seq(length(OMO$Date[2:33]))){
+  OMO_Date <- as.character(OMO$Date[i+1])
+
+  KNNClassTab[i,2] <- nrow(tmp_KNN.pred.tab[which(tmp_KNN.pred.tab$Date==OMO_Date&
+                           tmp_KNN.pred.tab$KNN.class=="Endog"),])
+  KNNClassTab[i,3] <- nrow(tmp_KNN.pred.tab[which(tmp_KNN.pred.tab$Date==OMO_Date&
+                           tmp_KNN.pred.tab$KNN.class=="Exog"),])
+  if(KNNClassTab[i,2]>KNNClassTab[i,3]){
+    KNNClassTab[i,4] <- "Endog"}
+  else{
+    if(KNNClassTab[i,2]<KNNClassTab[i,3]){
+      KNNClassTab[i,4] <-"Exog"}
+    else{KNNClassTab[i,4] <-"Ambiguous"}
+    }
+}
+
+
+# Endog vs Exog Days Plots ------------------------------------------------
+
+# Endog vs Exog Days Reg --------------------------------------------------
+OMO$Classification[2:33] <- KNNClassTab$KNN.Class
+
+
 # Policy Days vs Normal Days ----------------------------------------------
 
 DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
@@ -119,68 +272,33 @@ for(k in 4:(ncol(DeltaYieldCurves)-2)){
   myreg <- lm(DeltaYieldCurves[,k]~DeltaYieldCurves$d3M:DeltaYieldCurves$NP + 
                 DeltaYieldCurves$d3M:DeltaYieldCurves$P)
   # fill table
-    j = k+1-3 
-    Tab_NPvsPdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
-    Tab_NPvsPdays[2,j]  <- paste0("(", format(unlist(
-                            formatC(abs(round(summary(myreg)$coef[1,2],2)),format="f",digits=2)
-                                      )),")") # std intercept
-    Tab_NPvsPdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
-    Tab_NPvsPdays[4,j]  <- paste0("(", format(unlist(
-                            formatC(abs(round(summary(myreg)$coef[2,2],2)),format="f",digits=2)
-                                      )),")") # std beta NP
-    Tab_NPvsPdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta P
-    Tab_NPvsPdays[6,j]  <- paste0("(", format(unlist(
-                            formatC(abs(round(summary(myreg)$coef[3,2],2)),format="f",digits=2)
-                                      )),")") # std beta P
-    Tab_NPvsPdays[7,j]  <- round(summary(myreg)$r.squared,2) # R^2
+  j = k+1-3 
+  Tab_NPvsPdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
+  Tab_NPvsPdays[2,j]  <- paste0("(", format(unlist(
+    formatC(abs(round(summary(myreg)$coef[1,2],2)),format="f",digits=2)
+  )),")") # std intercept
+  Tab_NPvsPdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
+  Tab_NPvsPdays[4,j]  <- paste0("(", format(unlist(
+    formatC(abs(round(summary(myreg)$coef[2,2],2)),format="f",digits=2)
+  )),")") # std beta NP
+  Tab_NPvsPdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta P
+  Tab_NPvsPdays[6,j]  <- paste0("(", format(unlist(
+    formatC(abs(round(summary(myreg)$coef[3,2],2)),format="f",digits=2)
+  )),")") # std beta P
+  Tab_NPvsPdays[7,j]  <- round(summary(myreg)$r.squared,2) # R^2
   # add D-W statistic?
-    Tab_NPvsPdays[8,j]  <- formatC(abs(round(linearHypothesis(myreg,
-          "DeltaYieldCurves$d3M:DeltaYieldCurves$NP=DeltaYieldCurves$d3M:DeltaYieldCurves$P")$Pr[2
-                                      ],2)),format="f",digits=2)
+  Tab_NPvsPdays[8,j]  <- formatC(abs(round(linearHypothesis(myreg,
+                                                            "DeltaYieldCurves$d3M:DeltaYieldCurves$NP=DeltaYieldCurves$d3M:DeltaYieldCurves$P")$Pr[2
+                                                                                                                                                   ],2)),format="f",digits=2)
 }
 # export table to latex format
 library(xtable)
-print(xtable(Tab_NPvsPdays, align="lrrrrrrrrrr", digits=2, type="latex", 
-      caption="Yield curve response to short rate movements on policy days and non-policy days.",
-      label = "tab:NPvsPdays"), 
-      sanitize.text.function = function(x){x}, include.rownames=F,
-      booktabs=TRUE, caption.placement="top", 
-      file="Text/chapters/tables_graphs/NPvsPdays.tex")
-
-
-# Get classification ------------------------------------------------------
-
-setwd("C:/Users/Admin/Google Drive/Masterthesis")
-
-# Get functions
-MyProcFct   <- dget("functions/MyProcFct.R")
-MyClassFct  <- dget("functions/MyClassFct.R")
-
-# Get input to functions
-mystopwords <- scan(file='data/MyStopwords.txt', what='character',
-                    quiet=T) # own stop words
-myngrams    <- scan(file='data/CombPhrases.txt', what='character',quiet=T,sep=",")
-# List of phrases  to determine classification of corpus
-# Mon. policy responses to econ developments
-endog.words <- stemDocument(scan(file='data/EndogenousWords.txt', 
-                                 what='character',quiet=T))
-# Mon. policy responses to change in policy preferences
-exog.words  <- stemDocument(scan(file='data/ExogenousWords.txt', 
-                                 what='character',quiet=T))
-conf.level  <- 0.05 # confidence level
-
-for(i in 2:nrow(OMO)){ # get Yield Curve data for 2001 & 2017 as well
-
-  # get corpus
-  pathname    <- paste0(paste0("/data/articles_2001_2007/",OMO$Date[i]),"/")
-  Corpus      <- MyProcFct(path=pathname,mystopwords=mystopwords,myngrams=myngrams)
-  
-  # determine classification and store in table
-
-  OMO$Classification[i] <-  MyClassFct(
-                              Corpus.untagged=Corpus, endog.words=endog.words, 
-                              exog.words=exog.words, conf.level=conf.level)
-}
+#print(xtable(Tab_NPvsPdays, align="lrrrrrrrrrr", digits=2, type="latex", 
+#             caption="Yield curve response to short rate movements on policy days and non-policy days.",
+#             label = "tab:NPvsPdays"), 
+#      sanitize.text.function = function(x){x}, include.rownames=F,
+#      booktabs=TRUE, caption.placement="top", 
+#      file="Text/chapters/tables_graphs/NPvsPdays.tex")
 
 # Old Stuff ---------------------------------------------------------------
 

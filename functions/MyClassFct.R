@@ -90,25 +90,31 @@ function(Corpus.untagged,endog.words,exog.words,conf.level=0.05){
   }
   
   conf.level <- conf.level
-  
-  if(mean(TabScore$Endog,na.rm = T)==1){print("Endogenous") # all are endog
-    }else{if(mean(TabScore$Exog,na.rm = T)==1){print("Exogenous") # all are exog
-      }else{ # t-test if not clear
+
+  classif <- if(mean(TabScore$Endog,na.rm = T)==1){"Endogenous"
+                                            #print("Endogenous") # all are endog
+    }else{if(mean(TabScore$Exog,na.rm = T)==1){"Exogenous"
+                                            #print("Exogenous") # all are exog
+      }else{ # t-test if not unanimous
   if(
     t.test(TabScore$Endog,TabScore$Exog, alternative="greater", 
            mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value <
     conf.level){
-    print("Endogenous")
+    "Endogenous"
+    #print("Endogenous")
   } else{
     if(
       t.test(TabScore$Endog,TabScore$Exog, alternative="less", 
              mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value <
       conf.level){
-      print("Exogenous")
+      "Exogenous"
+      #print("Exogenous")
     } else{
-      print("Ambiguous")
+      "Ambiguous"
+      #print("Ambiguous")
     }
   }
   }
   }
+  result <- list(Results = results[,1:3], TabScore=TabScore, Classification = classif)
 }
