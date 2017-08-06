@@ -86,12 +86,17 @@ for(j in 2:ncol(TargetRates)){
   } 
 }
 
-plot(TargetRates[,1],TargetRates[,2],type='l',xlab="Date",
-     ylab="Interest Rates",col='cornflowerblue')              # lower bound
-lines(TargetRates[,1],TargetRates[,3], col='cornflowerblue')  # upper bound
+#plot(TargetRates[,1],TargetRates[,2],type='l',xlab="Date",
+#     ylab="Interest Rates",col='cornflowerblue')              # lower bound
+#lines(TargetRates[,1],TargetRates[,3], col='cornflowerblue')  # upper bound
 
 # add decisions where nothing was changed for analysis?
 
+# Table for results
+Tab_Class <- data.frame("Date"=OMO$Date, "Deterministic"=NA, "Deterministic_end"=NA, 
+                        "Deterministic_ex"=NA, "Bayes"=NA, "Bayes_end"=NA, 
+                        "Bayes_ex"=NA,"KNN"=NA, "KNN_end"=NA, "KNN_ex"=NA, 
+                        "SVM"=NA, "SVM_end"=NA, "SVM_ex"=NA)
 
 # Get classification ------------------------------------------------------
 
@@ -107,14 +112,14 @@ mystopwords <- scan(file='data/MyStopwords.txt', what='character',
 myngrams    <- scan(file='data/CombPhrases.txt', what='character',quiet=T,sep=",")
 
 # derive corpi from articles per OMO
-OMOdates <- OMO[2:33,1] # the ones where we have yield curve data
+OMOdates <- OMO$Date 
 path         <- "/data/articles_2001_2007"
 GetCorpus <- function(OMOdate, path){
   cl.dir <- paste0(sprintf("%s/%s",path, OMOdate),"/")
   cl.cor <- MyProcFct(path=cl.dir,mystopwords=mystopwords,myngrams=myngrams)
   result <- list(name = OMOdate, corp = cl.cor)
 }
-Corpi   <- lapply(OMOdates, GetCorpus, path=path)
+#Corpi   <- lapply(OMOdates, GetCorpus, path=path)
 #save(Corpi,file="Corpi_Factive.RData")
 
 # determine sentiment of every OMO
@@ -128,6 +133,7 @@ exog.words  <- stemDocument(scan(file='data/ExogenousWords.txt',
 # set confidence level
 conf.level  <- 0.05
 
+# TBC!
 GetClassification <- function(Corpus, path){
   MyClassFct(
     Corpus.untagged=Corpus, endog.words=endog.words, 
@@ -164,14 +170,12 @@ generateTDM <- function(sentiment, path){
   result <- list(name = sentiment, tdm = cl.tdm)
 }
 
-tdm_test <- lapply(sentiments, generateTDM, path=path)
+#tdm_test <- lapply(sentiments, generateTDM, path=path)
+#save(tdm_test, file="tdm_test.RData")
+load("tdm_test.RData")
 
 ## ACTION SET
-#OMOdates = OMO[2:nrow(OMO),1]
-#path         <- "/data/articles_2001_2007"
 generateTDM2 <- function(Corpus){
-  #cl.dir <- paste0(sprintf("%s/%s",path, OMOdate),"/")
-  #cl.cor <- MyProcFct(path=cl.dir,mystopwords=mystopwords,myngrams=myngrams)
   cl.cor <- Corpus$corp
   OMOdate <- Corpus$name
   cl.tdm <- TermDocumentMatrix(cl.cor)
@@ -207,6 +211,7 @@ tdm.class <- tdm.stack[,"targetclass"]
 tdm.class <- tdm.class[tdm.class=="Endog" | tdm.class=="Exog"]
 tdm.stack.nl <- tdm.stack[,!colnames(tdm.stack)%in%"targetclass"]
 
+# KNN
 library(class)
 knn.pred <- knn(tdm.stack.nl[seq(tdm.class),], # train set w/o classification
                 tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],], # action set
@@ -216,27 +221,96 @@ knn.pred <- knn(tdm.stack.nl[seq(tdm.class),], # train set w/o classification
 ArticleDates <- tdm.stack[,"targetclass"]
 ArticleDates <- ArticleDates[ArticleDates!="Endog" & ArticleDates!="Exog"]
 
-# MAKE THIS NICER WITH THE OTHER CLASSIFICATIONS IN THE TABLE
-# decision table
+# Enter results in Tab_Class table
+
 tmp_KNN.pred.tab  <- data.frame("Date"=ArticleDates, "KNN.class"= knn.pred)
 
-KNNClassTab  <- data.frame("Date"= OMO$Date[2:33],"KNN.Endog"=NA,"KNN.Exog"=NA, "KNN.Class"=NA)
-
-for(i in seq(length(OMO$Date[2:33]))){
-  OMO_Date <- as.character(OMO$Date[i+1])
-
-  KNNClassTab[i,2] <- nrow(tmp_KNN.pred.tab[which(tmp_KNN.pred.tab$Date==OMO_Date&
-                           tmp_KNN.pred.tab$KNN.class=="Endog"),])
-  KNNClassTab[i,3] <- nrow(tmp_KNN.pred.tab[which(tmp_KNN.pred.tab$Date==OMO_Date&
-                           tmp_KNN.pred.tab$KNN.class=="Exog"),])
-  if(KNNClassTab[i,2]>KNNClassTab[i,3]){
-    KNNClassTab[i,4] <- "Endog"}
+for(i in seq(length(OMO$Date))){
+  Tab_Class$KNN_end[i] <- nrow(tmp_KNN.pred.tab[which(
+                            tmp_KNN.pred.tab$Date==as.character(OMO$Date[i])&
+                            tmp_KNN.pred.tab$KNN.class=="Endog"),])
+  Tab_Class$KNN_ex[i]  <- nrow(tmp_KNN.pred.tab[which(
+                            tmp_KNN.pred.tab$Date==as.character(OMO$Date[i])&
+                            tmp_KNN.pred.tab$KNN.class=="Exog"),])
+  if(Tab_Class$KNN_end[i]>Tab_Class$KNN_ex[i]){
+        Tab_Class$KNN[i] <- "Endog"}
   else{
-    if(KNNClassTab[i,2]<KNNClassTab[i,3]){
-      KNNClassTab[i,4] <-"Exog"}
-    else{KNNClassTab[i,4] <-"Ambiguous"}
-    }
+    if(Tab_Class$KNN_end[i]<Tab_Class$KNN_ex[i]){
+          Tab_Class$KNN[i] <-"Exog"}
+    else{Tab_Class$KNN[i] <-"Ambiguous"}
+  }
 }
+
+rm(tmp_KNN.pred.tab)
+
+# NAIVE BAYES
+#library(RTextTools)
+library(e1071)
+NaiBayclassifier <- naiveBayes(as.matrix(tdm.stack.nl[seq(tdm.class),]), # test texts dtm as matrix
+                         as.factor(tdm.class)) # test classifications
+
+NaiBay.pred <- predict(NaiBayclassifier, # class element
+                       tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],]) # action set 
+
+# Enter results in Tab_Class table
+tmp_NaiBay.pred.tab  <- data.frame("Date"=ArticleDates, "NaiBay.class"= NaiBay.pred)
+
+for(i in seq(length(OMO$Date))){
+  Tab_Class$Bayes_end[i] <- nrow(tmp_NaiBay.pred.tab[which(
+                                 tmp_NaiBay.pred.tab$Date==as.character(OMO$Date[i])&
+                                 tmp_NaiBay.pred.tab$NaiBay.class=="Endog"),])
+  Tab_Class$Bayes_ex[i]  <- nrow(tmp_NaiBay.pred.tab[which(
+                                 tmp_NaiBay.pred.tab$Date==as.character(OMO$Date[i])&
+                                 tmp_NaiBay.pred.tab$NaiBay.class=="Exog"),])
+  if(Tab_Class$Bayes_end[i]>Tab_Class$Bayes_ex[i]){
+              Tab_Class$Bayes[i] <- "Endog"}
+  else{
+    if(Tab_Class$Bayes_end[i]<Tab_Class$Bayes_ex[i]){
+              Tab_Class$Bayes[i] <-"Exog"}
+    else{Tab_Class$Bayes[i] <-"Ambiguous"}
+  }
+}
+rm(tmp_NaiBay.pred.tab)
+
+# SVM
+# see https://www.svm-tutorial.com/2014/11/svm-classify-text-r/
+library(RTextTools)
+
+# Configure the training data
+Test_container <- create_container(tdm.stack.nl[seq(tdm.class),], # train set dtm
+                              as.numeric(as.factor(tdm.class)),# train set classification
+                              trainSize=seq(tdm.class), # train index
+                              virgin=FALSE)
+# train a SVM Model
+SVMclassifier <- train_model(Test_container, "SVM", kernel="linear", cost=1)
+
+# create the corresponding prediction container
+Act_container <- create_container(tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],], # action set dtm
+                                        labels=rep(0,length(seq(nrow(tdm.stack.nl))[-seq(tdm.class)])), # empty class
+                                        testSize=1:length(seq(nrow(tdm.stack.nl))[-seq(tdm.class)]),  # test index
+                                        virgin=FALSE)
+
+svm.pred <- classify_model(Act_container, SVMclassifier) # 1: endog, 2: exog
+
+# Enter results in Tab_Class table
+tmp_svm.pred.tab  <- data.frame("Date"=ArticleDates, "SVM.class"= svm.pred$SVM_LABEL)
+
+for(i in seq(length(OMO$Date))){
+  Tab_Class$SVM_end[i] <- nrow(tmp_svm.pred.tab[which(
+                               tmp_svm.pred.tab$Date==as.character(OMO$Date[i])&
+                               tmp_svm.pred.tab$SVM.class=="1"),])
+  Tab_Class$SVM_ex[i]  <- nrow(tmp_svm.pred.tab[which(
+                               tmp_svm.pred.tab$Date==as.character(OMO$Date[i])&
+                               tmp_svm.pred.tab$SVM.class=="2"),])
+  if(Tab_Class$SVM_end[i]>Tab_Class$SVM_ex[i]){
+                    Tab_Class$SVM[i] <- "Endog"}
+  else{
+    if(Tab_Class$Bayes_end[i]<Tab_Class$Bayes_ex[i]){
+                    Tab_Class$SVM[i] <-"Exog"}
+    else{Tab_Class$Bayes[i] <-"Ambiguous"}
+  }
+}
+rm(tmp_svm.pred.tab)
 
 
 # Endog vs Exog Days Plots ------------------------------------------------
