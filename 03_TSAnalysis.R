@@ -119,10 +119,12 @@ GetCorpus <- function(OMOdate, path){
   cl.cor <- MyProcFct(path=cl.dir,mystopwords=mystopwords,myngrams=myngrams)
   result <- list(name = OMOdate, corp = cl.cor)
 }
-#Corpi   <- lapply(OMOdates, GetCorpus, path=path)
+#Corpi   <- lapply(OMOdates, GetCorpus, path=path) # takes a while
 #save(Corpi,file="Corpi_Factive.RData")
+#load("Corpi_Factiva.RData")
 
 # determine sentiment of every OMO
+
 # List of phrases  to determine classification of corpus
 # Mon. policy responses to econ developments
 endog.words <- stemDocument(scan(file='data/EndogenousWords.txt', 
@@ -133,21 +135,16 @@ exog.words  <- stemDocument(scan(file='data/ExogenousWords.txt',
 # set confidence level
 conf.level  <- 0.05
 
-# TBC!
-GetClassification <- function(Corpus, path){
-  MyClassFct(
-    Corpus.untagged=Corpus, endog.words=endog.words, 
-    exog.words=exog.words, conf.level=conf.level)
-  return()
-}
+# Classify deterministically with own function and write in Tab_Class
 
-# loop to fill last OMO column with classification
-for(i in 2:(nrow(OMO)-1)){ # FIX NUMBERING WHEN ALL DATA AVAILABLE
-  Corpus=Corpi[[i-1]]$corp
+for(i in seq(nrow(OMO))){
+  Corpus <- Corpi[[i]]$corp
   # determine classification and store in table
-  OMO$Classification[i] <-  MyClassFct(
-        Corpus.untagged=Corpus, endog.words=endog.words, 
-        exog.words=exog.words, conf.level=conf.level)$Classification
+  Det_Classification <- MyClassFct(Corpus.untagged=Corpus, endog.words=endog.words, 
+                                   exog.words=exog.words, conf.level=conf.level)
+  Tab_Class$Deterministic[i]      <- Det_Classification$Classification
+  Tab_Class$Deterministic_end[i]  <- sum(Det_Classification$TabScore$Endog, na.rm = T)
+  Tab_Class$Deterministic_ex[i]   <- sum(Det_Classification$Results$TabScore$Exog, na.rm = T)
 }
 
 # ML classification -------------------------------------------------------
@@ -314,9 +311,131 @@ rm(tmp_svm.pred.tab)
 
 
 # Endog vs Exog Days Plots ------------------------------------------------
+# c.f. p. 15ff ES paper
+
+# WHICH CLASSIFICATION TO TAKE? -> eg KNN (later LDA)
+OMO$Classification <- Tab_Class$KNN
+# Yield curve data only from 2002
+
+DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
+                               diff(as.matrix(YieldCurves[,2:ncol(YieldCurves)])),NA,NA,NA)
+colnames(DeltaYieldCurves) <- c("Date","d1M","d3M","d6M","d1Y","d2Y","d3Y","d5Y","d7Y",
+                                "d10Y","d20Y","d30Y", "NP", "End","Ex")
+
+DeltaYieldCurves[,ncol(DeltaYieldCurves)-1]  <- 1-DeltaYieldCurves[,ncol(DeltaYieldCurves)]
+
+# fill in end or ex classification into table
+for(i in 1:nrow(DeltaYieldCurves)){
+  if(length(which(OMO$Date==DeltaYieldCurves$Date[i])) == 0){
+    DeltaYieldCurves$NP[i]    <- 1
+    DeltaYieldCurves$End[i]   <- 0
+    DeltaYieldCurves$Ex[i]    <- 0
+    }
+  else{
+    if(OMO$Classification[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Endog"){
+    DeltaYieldCurves$NP[i]    <- 0
+    DeltaYieldCurves$End[i]   <- 1
+    DeltaYieldCurves$Ex[i]    <- 0
+    }
+    if(OMO$Classification[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Exog"){
+    DeltaYieldCurves$NP[i]    <- 0      
+    DeltaYieldCurves$End[i]   <- 0
+    DeltaYieldCurves$Ex[i]    <- 1
+    }
+  }
+}
+
+# all classified policy events
+#pdf("Text/chapters/tables_graphs/ClassPolEvents.pdf", height=6, width=6) 
+# latex: \includegraphics[width=0.98\textwidth]{Text/chapters/tables_graphs/ClassPolEvents.pdf} 
+#par(mar = c(4, 4, 0.1, 0.1), cex.lab = 0.95, cex.axis = 0.9,
+#    mgp = c(2, 0.7, 0), tcl = -0.3, mfrow=c(1,1))
+plot(DeltaYieldCurves$d3M[which(DeltaYieldCurves$End==1|DeltaYieldCurves$Ex==1)],
+     DeltaYieldCurves$d10Y[which(DeltaYieldCurves$End==1|DeltaYieldCurves$Ex==1)],
+     xlab = "Change in 3-month rate", ylab = "Change in 10-year rate",
+     pch=19, xlim = c(-0.5,0.1))
+abline(h=0, v=0)
+#dev.off()
+
+# endog policy events
+#pdf("Text/chapters/tables_graphs/EndPolEvents.pdf", height=6, width=6) 
+#par(mar = c(4, 4, 0.1, 0.1), cex.lab = 0.95, cex.axis = 0.9,
+#    mgp = c(2, 0.7, 0), tcl = -0.3, mfrow=c(1,1))
+plot(DeltaYieldCurves$d3M[which(DeltaYieldCurves$End==1)],
+     DeltaYieldCurves$d10Y[which(DeltaYieldCurves$End==1)],
+     xlab = "Change in 3-month rate", ylab = "Change in 10-year rate",
+     pch=19, xlim = c(-0.06,0.04))
+abline(h=0, v=0)
+text(DeltaYieldCurves$d3M[which(DeltaYieldCurves$End==1)],
+     DeltaYieldCurves$d10Y[which(DeltaYieldCurves$End==1)],
+     labels=DeltaYieldCurves$Date[which(DeltaYieldCurves$End==1)], cex= 0.7, pos=2)
+#dev.off()
+
+# exog policy events
+#pdf("Text/chapters/tables_graphs/ExPolEvents.pdf", height=6, width=6) 
+#par(mar = c(4, 4, 0.1, 0.1), cex.lab = 0.95, cex.axis = 0.9,
+#    mgp = c(2, 0.7, 0), tcl = -0.3, mfrow=c(1,1))
+plot(DeltaYieldCurves$d3M[which(DeltaYieldCurves$Ex==1)],
+     DeltaYieldCurves$d10Y[which(DeltaYieldCurves$Ex==1)],
+     xlab = "Change in 3-month rate", ylab = "Change in 10-year rate",
+     pch=19, xlim = c(-0.55,0.1))
+abline(h=0, v=0)
+text(DeltaYieldCurves$d3M[which(DeltaYieldCurves$Ex==1)],
+     DeltaYieldCurves$d10Y[which(DeltaYieldCurves$Ex==1)],
+     labels=DeltaYieldCurves$Date[which(DeltaYieldCurves$End==1)], cex= 0.7, pos=2)
+#dev.off()
 
 # Endog vs Exog Days Reg --------------------------------------------------
-OMO$Classification[2:33] <- KNNClassTab$KNN.Class
+
+# replicate endog vs exog day regression table from ES, p. 18
+Tab_EndvsExdays  <- matrix(nrow=14-1-1-1,ncol=10)
+library(car)
+Tab_EndvsExdays[,1] <- c("$\\alpha_n$", "", "$\\beta_n^{NP}$", "", "$\\beta_n^{End}$", "",
+                       "$\\beta_n^{Ex}$", "", "$\\bar{R}^2$", 
+                       "$\\beta_n^{NP}$ = $\\beta_n^{End}$", "$\\beta_n^{End}$ = $\\beta_n^{Ex}$")
+colnames(Tab_EndvsExdays) <- c(" ","6m","1y","2y","3y","5y","7y","10y","20y","30y")
+
+for(k in 4:(ncol(DeltaYieldCurves)-3)){
+  # regress change in n-maturity on NP-dummy*delta3m + End-dummy*delta3m + Ex-dummy*delta3m
+  myreg <- lm(DeltaYieldCurves[,k]~DeltaYieldCurves$d3M:DeltaYieldCurves$NP + 
+                DeltaYieldCurves$d3M:DeltaYieldCurves$End+
+                DeltaYieldCurves$d3M:DeltaYieldCurves$Ex)
+  # fill table
+  j = k+1-3 
+  Tab_EndvsExdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
+  Tab_EndvsExdays[2,j]  <- paste0("(", format(unlist(
+                            formatC(abs(round(summary(myreg)$coef[1,2],2)),format="f",digits=2)
+                            )),")") # std intercept
+  Tab_EndvsExdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
+  Tab_EndvsExdays[4,j]  <- paste0("(", format(unlist(
+                            formatC(abs(round(summary(myreg)$coef[2,2],2)),format="f",digits=2)
+                            )),")") # std beta NP
+  Tab_EndvsExdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta End
+  Tab_EndvsExdays[6,j]  <- paste0("(", format(unlist(
+                            formatC(abs(round(summary(myreg)$coef[3,2],2)),format="f",digits=2)
+                            )),")") # std beta End
+  Tab_EndvsExdays[7,j]  <- round(summary(myreg)$coef[4,1],2) # beta Ex
+  Tab_EndvsExdays[8,j]  <- paste0("(", format(unlist(
+                            formatC(abs(round(summary(myreg)$coef[4,2],2)),format="f",digits=2)
+                            )),")") # std beta Ex
+  Tab_EndvsExdays[9,j]  <- round(summary(myreg)$r.squared,2) # R^2
+  # add D-W statistic?
+  Tab_EndvsExdays[10,j]  <- formatC(abs(round(linearHypothesis(myreg, # test equality param NP & End
+                            "DeltaYieldCurves$d3M:DeltaYieldCurves$NP=DeltaYieldCurves$d3M:DeltaYieldCurves$End")$Pr[2
+                            ],2)),format="f",digits=2)
+  Tab_EndvsExdays[11,j]  <- formatC(abs(round(linearHypothesis(myreg, # test equality param End & Ex
+                            "DeltaYieldCurves$d3M:DeltaYieldCurves$End=DeltaYieldCurves$d3M:DeltaYieldCurves$Ex")$Pr[2
+                            ],2)),format="f",digits=2)
+}
+
+# export table to latex format
+library(xtable)
+#print(xtable(Tab_EndvsExdays, align="lrrrrrrrrrr", digits=2, type="latex", 
+#             caption="Yield curve response to short rate movements on classified policy days.",
+#             label = "tab:EndogvsExogdays"), 
+#      sanitize.text.function = function(x){x}, include.rownames=F,
+#      booktabs=TRUE, caption.placement="top", 
+#      file="Text/chapters/tables_graphs/EndogvsExogdays.tex")
 
 
 # Policy Days vs Normal Days ----------------------------------------------
@@ -365,6 +484,7 @@ for(k in 4:(ncol(DeltaYieldCurves)-2)){
                                                             "DeltaYieldCurves$d3M:DeltaYieldCurves$NP=DeltaYieldCurves$d3M:DeltaYieldCurves$P")$Pr[2
                                                                                                                                                    ],2)),format="f",digits=2)
 }
+
 # export table to latex format
 library(xtable)
 #print(xtable(Tab_NPvsPdays, align="lrrrrrrrrrr", digits=2, type="latex", 
@@ -373,56 +493,6 @@ library(xtable)
 #      sanitize.text.function = function(x){x}, include.rownames=F,
 #      booktabs=TRUE, caption.placement="top", 
 #      file="Text/chapters/tables_graphs/NPvsPdays.tex")
-
-# Old Stuff ---------------------------------------------------------------
-
-# FOMC Dates - Full History Web Scrape ------------------------------------
-
-# https://www.r-bloggers.com/fomc-dates-full-history-web-scrape/
-# http://www.returnandrisk.com/2014/11/scraping-data-from-web-pages-fomc-dates.html
-# funcions: https://github.com/returnandrisk/r-code/blob/master/FOMC%20Dates%20Functions.R
-
-# read table from Excel and export to LaTeX
-OMO_dates     <- read.xlsx("data/FED_OpenMarket_Operations.xlsx", sheetName = "OMOs")
-# issue with dates an xtable, fix:
-#xtable <- function(x, ...) {
-#  for (i in which(sapply(x, function(y) !all(is.na(match(c("POSIXt","Date"),
-#        class(y))))))) x[[i]] <- as.character(x[[i]])
-#        xtable::xtable(x, ...)
-#}
-#print(xtable(as.data.frame(OMO_dates[,c(1,3:16)]), caption="Federal Funds Targets.", 
-#             label = "tab:OMOs", align="rrrrrrrrrrrrrrrr", floating=TRUE,
-#             digits=c(0,0,4,4,4,4,3,3,3,3,3,3,3,3,3,3)), booktabs=TRUE, caption.placement="top")
-
-# BBG data ----------------------------------------------------------------
-# from Bloomberg - data to be updated!
-#YCGT                  <- read.csv(file="data/US_Treasury_Actives_Curve.csv", 
-#                                  header=TRUE, sep=";", na.strings =".", 
-#                                  stringsAsFactors=FALSE)
-#YCGT[,1]              <- as.Date(YCGT[,1],"%d.%m.%Y") 
-#colnames(YCGT)        <- c("Date","1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","30Y")
-
-# !! how to treat values missing due to holidays/weekends etc?
-# replace NAs with the last non-NA value - for instance!
-# !! look up first NA levels; hard paste (outch)
-#YCGT[1,2] = YCGT[1,3]# noooooooooooooo
-#YCGT[1,5] = (YCGT[1,4]+YCGT[1,6])/2# noooooooooooooo
-#YCGT[1,9] = (YCGT[1,8]+YCGT[1,10])/2# noooooooooooooo
-# better extrapolate somehow
-#for(j in 2:ncol(YCGT)){
-#  for(i in 1:nrow(YCGT)){
-#    if(is.na(YCGT[i,j])==T){
-#      YCGT[i,j]               <- YCGT[i-1,j]
-#    }
-#  } 
-#}
-# truncate data to relevant time period
-#YCGT                    <- YCGT[which(
-#          YCGT[,1]=="2007-01-01"):which( # sample start
-#          YCGT[,1]=="2016-12-31"),]      # sample end
-
-# plot(strptime(YCGT[,1],'%d-%m-%dY'),YCGT[,2],type='l',xlab="Date",ylab="1M")
-
 
 ####################################################
 ##                      END                       ##
