@@ -147,7 +147,8 @@ for(i in seq(nrow(OMO))){
   Tab_Class$Deterministic_ex[i]   <- sum(Det_Classification$Results$TabScore$Exog, na.rm = T)
 }
 
-# ML classification -------------------------------------------------------
+
+# ML setup ----------------------------------------------------------------
 
 setwd("C:/Users/Admin/Google Drive/Masterthesis")
 MyProcFct   <- dget("functions/MyProcFct.R")
@@ -208,7 +209,9 @@ tdm.class <- tdm.stack[,"targetclass"]
 tdm.class <- tdm.class[tdm.class=="Endog" | tdm.class=="Exog"]
 tdm.stack.nl <- tdm.stack[,!colnames(tdm.stack)%in%"targetclass"]
 
-# KNN
+
+# KNN ---------------------------------------------------------------------
+
 library(class)
 knn.pred <- knn(tdm.stack.nl[seq(tdm.class),], # train set w/o classification
                 tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],], # action set
@@ -240,7 +243,9 @@ for(i in seq(length(OMO$Date))){
 
 rm(tmp_KNN.pred.tab)
 
-# NAIVE BAYES
+
+# Naive Bayes -------------------------------------------------------------
+
 #library(RTextTools)
 library(e1071)
 NaiBayclassifier <- naiveBayes(as.matrix(tdm.stack.nl[seq(tdm.class),]), # test texts dtm as matrix
@@ -269,7 +274,9 @@ for(i in seq(length(OMO$Date))){
 }
 rm(tmp_NaiBay.pred.tab)
 
-# SVM
+
+# SVM ---------------------------------------------------------------------
+
 # see https://www.svm-tutorial.com/2014/11/svm-classify-text-r/
 library(RTextTools)
 
@@ -308,6 +315,88 @@ for(i in seq(length(OMO$Date))){
   }
 }
 rm(tmp_svm.pred.tab)
+
+
+
+
+# LDA ---------------------------------------------------------------------
+
+# read: http://tidytextmining.com/topicmodeling.html
+library(topicmodels)
+generateDTM <- function(Corpus){
+  cl.cor <- Corpus$corp
+  OMOdate <- Corpus$name
+  cl.tdm <- DocumentTermMatrix(cl.cor)
+  #cl.tdm <- removeSparseTerms(cl.tdm, 0.7)
+  result <- list(name = OMOdate, dtm = cl.tdm)
+}
+
+#load("Corpi_Factiva.RData")
+dtm_act <- lapply(Corpi, generateDTM)
+
+dtm_act[[1]]$dtm
+
+# documents as mixture of words
+
+# set a seed so that the output of the model is predictable
+news_lda <- LDA(dtm_act[[1]]$dtm, k = 2, control = list(seed = 40888))
+news_lda
+
+library(tidytext)
+
+news_topics <- tidy(news_lda, matrix = "beta")
+news_topics
+
+library(ggplot2)
+library(dplyr)
+
+# per-topic-per-word probabilities, called beta, from the model
+news_top_terms <- news_topics %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+news_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+
+# greatest difference in beta between topic 1 and topic 2
+library(tidyr)
+
+beta_spread <- news_topics %>%
+  mutate(topic = paste0("topic", topic)) %>%
+  spread(topic, beta) %>%
+  filter(topic1 > .001 | topic2 > .001) %>%
+  mutate(log_ratio = log2(topic2 / topic1))
+
+beta_spread
+
+beta_spread %>%
+  mutate(term = reorder(term, log_ratio)) %>%
+  arrange(desc(abs(log_ratio))) %>%
+  head(50) %>%
+  mutate(term = reorder(term, log_ratio)) %>%  
+  ggplot(aes(term, log_ratio, fill = log_ratio > 0)) +
+  geom_col(show.legend = FALSE) +
+  xlab("term") +
+  ylab("Log2 ratio of beta in topic 2 / topic 1") +  
+  coord_flip()
+
+## documents as mixture of topics
+
+news_documents <- tidy(news_lda, matrix = "gamma")
+news_documents
+
+# most common words in doc
+tidy(dtm_act[[1]]$dtm) %>%
+  filter(document == 1) %>%
+  arrange(desc(count))
+
+
 
 
 ####################################################
