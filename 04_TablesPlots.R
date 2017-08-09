@@ -10,6 +10,20 @@
 
 # Input: OMO, Tab_Class, YieldCurves
 
+# Federal funds targets table ---------------------------------------------
+# WHICH CLASSIFICATION TO TAKE? -> eg KNN (later LDA)
+OMO$Classification <- Tab_Class$KNN
+
+# export table to latex format - FIX DATE
+library(xtable)
+#print(xtable(OMO[2:nrow(OMO),], align="lrrrrrrrrrrrrrrrrrr", digits=4, type="latex", 
+#             caption="Federal Funds Target Rates.",
+#             label = "tab:FEDfundstgt"), 
+#      sanitize.text.function = function(x){x}, include.rownames=F,
+#      booktabs=TRUE, caption.placement="top", 
+#      file="Text/chapters/tables_graphs/FEDfundstgt.tex")
+
+
 # Endog vs Exog Days Plots ------------------------------------------------
 # c.f. p. 15ff ES paper
 
@@ -194,3 +208,8 @@ library(xtable)
 #      booktabs=TRUE, caption.placement="top", 
 #      file="Text/chapters/tables_graphs/NPvsPdays.tex")
 
+
+
+####################################################
+##                      END                       ##
+####################################################
