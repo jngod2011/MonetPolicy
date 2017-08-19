@@ -399,6 +399,12 @@ tidy(dtm_act[[1]]$dtm) %>%
 
 
 
+# Text Classification and Topic Modelling ---------------------------------
+
+# supervised SVM, predefine topics
+# https://brazenly.blogspot.de/2016/05/r-text-classification-and-topic_1.html
+
+
 ####################################################
 ##                      END                       ##
 ####################################################
