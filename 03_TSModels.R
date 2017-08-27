@@ -41,23 +41,34 @@ colnames(YieldCurves) <- c("Date","1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y",
 OMO                       <- read.csv(file="data/FED_OpenMarket_Operations.csv", 
                                     header=TRUE, sep=";", na.strings =".", 
                                     stringsAsFactors=FALSE)
-colnames(OMO)             <- c("Date","Scheduled","$Tgt_{low}$", "$Tgt_{high}$", "$\\Delta_{low}$", 
+colnames(OMO)             <- c("Date","Sched","$Tgt_{low}$", "$Tgt_{high}$", "$\\Delta_{low}$", 
                                "$\\Delta_{high}$",
                                "1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","20Y",
-                               "30Y", "Classification")
+                               "30Y", "Class")
 OMO$Date                   <- as.Date(OMO$Date,"%Y-%m-%d") 
 
-# fill Yield Curve data into OMO dates
+# fill Yield Curve Change data into OMO dates
 for(i in 1:nrow(OMO)){
-  if(!length(which(OMO[i,1]==YieldCurves[,1]))==T){# NA when date is not given
+  # NA when date is not given
+  if(!length(which(OMO[i,1]==YieldCurves[,1]))==T){
     OMO[i,7:17]                 <- NA
   }
+  # find YC date that corresponds to OMO
   else{
-    OMO[i,7:17]               <- YieldCurves[# find YC date that corresponds to OMO
+    OMO[i,7:17]               <- round(YieldCurves[
                                           which(OMO[i,1]==YieldCurves[,1]), 
-                                          2:ncol(YieldCurves)]
+                                          2:ncol(YieldCurves)]/
+                                       YieldCurves[
+                                          which(OMO[i,1]==YieldCurves[,1])-1, 
+                                          2:ncol(YieldCurves)]-1,2)
   }
 } # export OMO table to latex after classification w/o 1st row
+# get rid of /0 issue
+OMO <- do.call(data.frame,lapply(OMO, function(x) replace(x, is.infinite(x),NA)))
+colnames(OMO)             <- c("Date","Sched","$Tgt_{low}$", "$Tgt_{high}$", "$\\Delta_{low}$", 
+                               "$\\Delta_{high}$",
+                               "1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","20Y",
+                               "30Y", "Class")
 
 # set up data frame interest rates and targets
 TargetRates               <- data.frame(YieldCurves[,1])
@@ -85,12 +96,6 @@ for(j in 2:ncol(TargetRates)){
     }
   } 
 }
-
-#plot(TargetRates[,1],TargetRates[,2],type='l',xlab="Date",
-#     ylab="Interest Rates",col='cornflowerblue')              # lower bound
-#lines(TargetRates[,1],TargetRates[,3], col='cornflowerblue')  # upper bound
-
-# add decisions where nothing was changed for analysis?
 
 # Table for results
 Tab_Class <- data.frame("Date"=OMO$Date, "Deterministic"=NA, "Deterministic_end"=NA, 

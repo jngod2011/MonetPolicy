@@ -16,12 +16,50 @@ OMO$Classification <- Tab_Class$KNN
 
 # export table to latex format - FIX DATE
 library(xtable)
-#print(xtable(OMO[2:nrow(OMO),], align="lrrrrrrrrrrrrrrrrrr", digits=4, type="latex", 
+#OMO$Date<-as.character(OMO$Date)
+#print(xtable(OMO[2:nrow(OMO),], align="llcrrrrrrrrrrrrrrrr", digits=c(
+#                0,0,4,4,4,4,4,2,2,2,2,2,2,2,2,2,2,2,0), type="latex", 
 #             caption="Federal Funds Target Rates.",
 #             label = "tab:FEDfundstgt"), 
 #      sanitize.text.function = function(x){x}, include.rownames=F,
-#      booktabs=TRUE, caption.placement="top", 
+#      booktabs=TRUE, caption.placement="top", floating.environment='sidewaystable',
+#      size="\\fontsize{8pt}{9pt}\\selectfont",
 #      file="Text/chapters/tables_graphs/FEDfundstgt.tex")
+
+
+# Fed Funds vs Int Rate Plots ---------------------------------------------
+
+#pdf("Text/chapters/tables_graphs/FedFundsIntRate.pdf", height=6, width=6) 
+# latex: \includegraphics[width=0.98\textwidth]{chapters/tables_graphs/FedFundsIntRate.pdf} 
+#par(mar = c(4, 4, 0.1, 0.1), cex.lab = 0.95, cex.axis = 0.9,
+#    mgp = c(2, 0.7, 0), tcl = -0.3, mfrow=c(1,1))
+plot(TargetRates$Date,TargetRates$Target_min*100, # lower bound
+     type = 'l', xlab = "Date", ylab = "Interest Rate (percent)",
+     lwd=1, col='cornflowerblue', pch=19)
+lines(TargetRates$Date,TargetRates$Taget_max*100, lwd = 1, col='cornflowerblue')  # upper bound
+lines(YieldCurves$Date,YieldCurves$`1M`, col = 'orange', lwd = 1) # 1M g'ment bond
+# add QE dates
+abline(v=c(TargetRates$Date[which(TargetRates$Date=="2008-11-25")], # QE1
+           #TargetRates$Date[which(TargetRates$Date=="2009-03-18")], # QE1
+           TargetRates$Date[which(TargetRates$Date=="2010-11-03")], # QE2
+           TargetRates$Date[which(TargetRates$Date=="2011-09-21")], # Op Twist
+           TargetRates$Date[which(TargetRates$Date=="2012-09-13")]), # QE3
+       col = "darkgrey", untf = F, lwd = 1)
+mtext("QE1", side = 1, line = 0, outer = FALSE, 
+      at = TargetRates$Date[which(TargetRates$Date=="2008-11-25")],
+      adj = NA, padj = NA, cex = 0.7, col = "darkgrey", font = NA, crt=90)
+mtext("QE2", side = 1, line = 0, outer = FALSE, 
+      at = TargetRates$Date[which(TargetRates$Date=="2010-11-03")],
+      adj = NA, padj = NA, cex = 0.7, col = "darkgrey", font = NA, crt=90)
+mtext("Twist", side = 1, line = 0, outer = FALSE, 
+      at = TargetRates$Date[which(TargetRates$Date=="2011-09-21")],
+      adj = NA, padj = NA, cex = 0.7, col = "darkgrey", font = NA, crt=90)
+mtext("QE3", side = 1, line = 0, outer = FALSE, 
+      at = TargetRates$Date[which(TargetRates$Date=="2012-09-13")],
+      adj = NA, padj = NA, cex = 0.7, col = "darkgrey", font = NA, crt=90)
+#dev.off()
+
+# add decisions where nothing was changed for analysis?
 
 
 # Endog vs Exog Days Plots ------------------------------------------------
