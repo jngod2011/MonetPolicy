@@ -11,14 +11,17 @@
 # Input: OMO, Tab_Class, YieldCurves
 
 # Federal funds targets table ---------------------------------------------
-# WHICH CLASSIFICATION TO TAKE? -> eg KNN (later LDA)
-OMO$Classification <- Tab_Class$KNN
+# WHICH CLASSIFICATION TO TAKE? -> eg KNN (Tab_Class$KNN); later LDA
+OMO$Classification <- c("NA","Exog", rep.int("Endog",times=17),"Exog",
+                        "Endog","Exog","Endog","Exog", 
+                        rep.int("Endog",times=5),"Exog","Exog", 
+                        rep.int("Endog",times=3))
 
-# export table to latex format - FIX DATE
+# export table to latex format
 library(xtable)
-#OMO$Date<-as.character(OMO$Date)
-#print(xtable(OMO[2:nrow(OMO),], align="llcrrrrrrrrrrrrrrrr", digits=c(
-#                0,0,4,4,4,4,4,2,2,2,2,2,2,2,2,2,2,2,0), type="latex", 
+#OMO$Date<-as.character(OMO$Date) # fix date
+#print(xtable(OMO[2:nrow(OMO),], align="llcrrrrrrrrrrrrrrrrr", digits=c(
+#                0,0,4,4,4,4,4,2,2,2,2,2,2,2,2,2,2,2,0,0), type="latex", 
 #             caption="Federal Funds Target Rates.",
 #             label = "tab:FEDfundstgt"), 
 #      sanitize.text.function = function(x){x}, include.rownames=F,
@@ -66,7 +69,7 @@ mtext("QE3", side = 1, line = 0, outer = FALSE,
 # c.f. p. 15ff ES paper
 
 # WHICH CLASSIFICATION TO TAKE? -> eg KNN (later LDA)
-OMO$Classification <- Tab_Class$KNN
+#OMO$Classification <- Tab_Class$KNN
 # Yield curve data only from 2002
 
 DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
@@ -156,19 +159,19 @@ for(k in 4:(ncol(DeltaYieldCurves)-3)){
   j = k+1-3 
   Tab_EndvsExdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
   Tab_EndvsExdays[2,j]  <- paste0("(", format(unlist(
-    formatC(abs(round(summary(myreg)$coef[1,2],2)),format="f",digits=2)
+    formatC(abs(round(summary(myreg)$coef[1,4],2)),format="f",digits=2)
   )),")") # std intercept
   Tab_EndvsExdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
   Tab_EndvsExdays[4,j]  <- paste0("(", format(unlist(
-    formatC(abs(round(summary(myreg)$coef[2,2],2)),format="f",digits=2)
+    formatC(abs(round(summary(myreg)$coef[2,4],2)),format="f",digits=2)
   )),")") # std beta NP
   Tab_EndvsExdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta End
   Tab_EndvsExdays[6,j]  <- paste0("(", format(unlist(
-    formatC(abs(round(summary(myreg)$coef[3,2],2)),format="f",digits=2)
+    formatC(abs(round(summary(myreg)$coef[3,4],2)),format="f",digits=2)
   )),")") # std beta End
   Tab_EndvsExdays[7,j]  <- round(summary(myreg)$coef[4,1],2) # beta Ex
   Tab_EndvsExdays[8,j]  <- paste0("(", format(unlist(
-    formatC(abs(round(summary(myreg)$coef[4,2],2)),format="f",digits=2)
+    formatC(abs(round(summary(myreg)$coef[4,4],2)),format="f",digits=2)
   )),")") # std beta Ex
   Tab_EndvsExdays[9,j]  <- round(summary(myreg)$r.squared,2) # R^2
   # add D-W statistic?
@@ -220,15 +223,15 @@ for(k in 4:(ncol(DeltaYieldCurves)-2)){
   j = k+1-3 
   Tab_NPvsPdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
   Tab_NPvsPdays[2,j]  <- paste0("(", format(unlist(
-    formatC(abs(round(summary(myreg)$coef[1,2],2)),format="f",digits=2)
+    formatC(abs(round(summary(myreg)$coef[1,4],2)),format="f",digits=2)
   )),")") # std intercept
   Tab_NPvsPdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
   Tab_NPvsPdays[4,j]  <- paste0("(", format(unlist(
-    formatC(abs(round(summary(myreg)$coef[2,2],2)),format="f",digits=2)
+    formatC(abs(round(summary(myreg)$coef[2,4],2)),format="f",digits=2)
   )),")") # std beta NP
   Tab_NPvsPdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta P
   Tab_NPvsPdays[6,j]  <- paste0("(", format(unlist(
-    formatC(abs(round(summary(myreg)$coef[3,2],2)),format="f",digits=2)
+    formatC(abs(round(summary(myreg)$coef[3,4],2)),format="f",digits=2)
   )),")") # std beta P
   Tab_NPvsPdays[7,j]  <- round(summary(myreg)$r.squared,2) # R^2
   # add D-W statistic?
@@ -246,6 +249,14 @@ library(xtable)
 #      booktabs=TRUE, caption.placement="top", 
 #      file="Text/chapters/tables_graphs/NPvsPdays.tex")
 
+
+
+
+
+# Policy Days vs Normal Days QE -------------------------------------------
+
+
+# Exog vs Endog QE Reg ----------------------------------------------------
 
 
 ####################################################

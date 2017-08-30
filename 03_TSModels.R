@@ -118,14 +118,15 @@ myngrams    <- scan(file='data/CombPhrases.txt', what='character',quiet=T,sep=",
 
 # derive corpi from articles per OMO
 OMOdates <- OMO$Date 
-path         <- "/data/articles_2001_2007"
+# short: without training set articles; all including them
+path         <- "/data/articles_2001_2007_short"
 GetCorpus <- function(OMOdate, path){
   cl.dir <- paste0(sprintf("%s/%s",path, OMOdate),"/")
   cl.cor <- MyProcFct(path=cl.dir,mystopwords=mystopwords,myngrams=myngrams)
   result <- list(name = OMOdate, corp = cl.cor)
 }
 #Corpi   <- lapply(OMOdates, GetCorpus, path=path) # takes a while
-#save(Corpi,file="Corpi_Factive.RData")
+#save(Corpi,file="Corpi_Factiva_short.RData")
 #load("Corpi_Factiva.RData")
 
 # determine sentiment of every OMO
@@ -149,7 +150,7 @@ for(i in seq(nrow(OMO))){
                                    exog.words=exog.words, conf.level=conf.level)
   Tab_Class$Deterministic[i]      <- Det_Classification$Classification
   Tab_Class$Deterministic_end[i]  <- sum(Det_Classification$TabScore$Endog, na.rm = T)
-  Tab_Class$Deterministic_ex[i]   <- sum(Det_Classification$Results$TabScore$Exog, na.rm = T)
+  Tab_Class$Deterministic_ex[i]   <- sum(Det_Classification$TabScore$Exog, na.rm = T)
 }
 
 
@@ -173,9 +174,9 @@ generateTDM <- function(sentiment, path){
   result <- list(name = sentiment, tdm = cl.tdm)
 }
 
-#tdm_test <- lapply(sentiments, generateTDM, path=path)
-#save(tdm_test, file="tdm_test.RData")
-load("tdm_test.RData")
+#tdm_train <- lapply(sentiments, generateTDM, path=path)
+#save(tdm_train, file="tdm_train.RData")
+load("tdm_train.RData")
 
 ## ACTION SET
 generateTDM2 <- function(Corpus){
@@ -190,7 +191,7 @@ generateTDM2 <- function(Corpus){
 tdm_act <- lapply(Corpi, generateTDM2)
 
 ## COMBINE both
-tdm_comb <- append(tdm_test,tdm_act)
+tdm_comb <- append(tdm_train,tdm_act)
 
 bindClassToTDM <- function(tdm){
   cl.mat <- t(data.matrix(tdm[["tdm"]]))
