@@ -323,7 +323,40 @@ for(i in seq(length(OMO$Date))){
 rm(tmp_svm.pred.tab)
 
 
+# add maxent?
+# https://www.r-bloggers.com/sentiment-analysis-with-machine-learning-in-r/
 
+# Model performance -------------------------------------------------------
+
+set.seed(40888) # loop around
+train.idx <- sample(length(tdm.class), ceiling(length(tdm.class) *0.9))
+test.idx <- (1:length(tdm.class))[- train.idx]
+
+# Naive Bayes
+NB_class_PERF <- naiveBayes(as.matrix(tdm.stack.nl[train.idx,]), # test texts dtm as matrix
+                            as.factor(tdm.class[train.idx])) # test classifications
+
+NB_pred_PERF <- predict(NB_class_PERF, # class element
+                        tdm.stack.nl[test.idx,]) # action set 
+
+NB_conf.mat <- table("Predictions" = NB_pred_PERF, "Actual" = tdm.class[test.idx])
+NB_conf.mat
+(accuracy <- sum(diag(NB_conf.mat))/length(test.idx))
+
+rm(NB_class_PERF,NB_pred_PERF,NB_conf.mat)
+
+# knn
+knn.pred_PERF <- knn(tdm.stack.nl[train.idx, ], tdm.stack.nl[test.idx, ], tdm.class[train.idx])
+
+knn_conf.mat <- table("Predictions" = knn.pred_PERF, "Actual" = tdm.class[test.idx])
+knn_conf.mat
+(accuracy <- sum(diag(knn_conf.mat))/length(test.idx))
+
+rm(knn_pred_PERF,knn_conf.mat)
+
+# svm
+
+rm(train.idx,test.idx)
 
 # LDA ---------------------------------------------------------------------
 

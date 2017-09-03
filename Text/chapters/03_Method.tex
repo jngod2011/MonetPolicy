@@ -24,12 +24,25 @@ Part-of-Speech (POS) tags as presented in table~\vref{tab:POS_tags} are applied 
 
 % Sentence-Document model see \textcite{McDonald.2007} (Sentiment_Proceedings2007_p470) 2.1 ff for notation
 
+% pre-processing: remove stopwords, stemming, fuzzy matching (not needed here), etc
+
 \subsection{Article identification}
 
 \dots 
 % before 07: factiva by hand (two days before, 4 after; filter for 'Währungspolitik', Nordamerika, English and a few buzzwords)
 % after 07: use before 07 articles and some after 07 articles determined through TA and let elastic chose similar articles around a date
 % this way, elastic algo identifies relevant stuff over time and specific for the period after 07
+
+% DATA: 
+% pre-selection of articles done through, among others, \textcite{Elastic.2015}
+% Elastic: https://www.elastic.co/guide/en/elasticsearch/guide/current/getting-started.html
+
+% For future: check which words are typical for authors, see Jane Austin stuff in the textbook
+
+\subsection{Pre-processing}
+POS etc, \dots
+As pointed out in \textcite{Hu.2004}, two techniques are most widely spread when it comes to discovering terms in corpora. Symbolic approaches that are based on terms such as noun phrases and their syntactic description encompass the first, statistical approaches the second while the latter make use of the fact that words composing a term a in close proximity to each other and reoccur. 
+
 
 \subsection{Sentiment determination}
 
@@ -51,8 +64,46 @@ In order to identify the sentiment of each text piece as endogenous or exogenous
 % tf-itf: https://cran.r-project.org/web/packages/tidytext/vignettes/tf_idf.html is used instead of stopword stripping but we don't do that since we pre-select articles s.t. content is similar
 % widely used term-weighting scheme according to wikipedia: https://en.wikipedia.org/wiki/Tf%E2%80%93idf -> not useful here since docs are pre-selected!
 
+% stuff to look out for
+% careful with valence shifters, presuppositional items and modal auxiliary verbs -> combine to unigram
+% sarcasm, on the other hand should play less of an important role since 'boring' facts are reported -> different in blogs
+% Opinion spam as in Jindal and Liu 2007, 2008 not an issue either
+
+
 % Dictionary-based methods like the ones we are discussing find the total sentiment of a piece of text by adding up the individual sentiment scores for each word in the text. (http://tidytextmining.com/sentiment.html)
 
 % PROBLEM: other stuff (QE) happened in the period, impacts bond rates -> include or neglect?
 
 % Add QE dummy in regressions
+
+% Naive Bayes see IBM paper -> independent conditional probabilities assumption unrealistic:  certain word combinations tend to show up consistently
+% This hints as to why the independence assumption might not be so quite so idiotic. Since the prediction depends only the on the maximum, the algorithm will get it right even if there are dependencies between feature providing the dependencies do not change which class has the maximum probability (once again, note that only the maximal class is important here, not  the value of the maximum).
+%Yet another reason for the surprising success of Naïve Bayes is that dependencies often cancel out across a large set of features. But, of course, there is no guarantee that this will always happen. -> good for discrete dependent variables
+
+
+% train and test sets must contain records that are representative of the entire dataset
+
+% Fed target history, analyses about yield curve movements -> graph in descriptives?
+
+% TO METHODOLOGY: As suggested in the references above but in particular \textcite{Blinder.2010}, Fed chairman announced a lot of things that could have an impact but cannot be controlled for in the regressions in chatper later (coincide with other announcements, sample too small for that, some alone some accompany target rate decisions - include all or none)
+
+\subsubsection{Count-based evaluation}
+Intuitive
+
+% Elements of statistical learning
+% bayes: p. 211
+% knn: p. 463
+% svm p. 417
+
+\subsubsection{Na\"{i}ve bayes}
+R: The standard naive Bayes classifier (at least this implementation) assumes independence of the predictor variables, and Gaussian distribution (given the target class) of metric predictors.
+
+\subsubsection{Knn}
+R: k-nearest neighbour classification for test set from training set. For each row of the test set, the k
+nearest (in Euclidean distance) training set vectors are found, and the classification is decided by
+majority vote, with ties broken at random. If there are ties for the kth nearest vector, all candidates
+are included in the vote.
+
+\subsubsection{Support vector machines}
+R: svm is used to train a support vector machine. It can be used to carry out general regression and
+classification (of nu and epsilon-type), as well as density-estimation. A formula interface is provided.
