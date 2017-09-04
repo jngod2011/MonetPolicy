@@ -3,107 +3,98 @@
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %	
 
 \textcite{Liu.2012} summarizes the most influential papers in the area of sentiment analysis or opinion mining, a procedure to determine whether a snippet of text, be it in the form of a commentary on a product, post on social media or article in a newspaper, communicates a positive, negative or neutral message about the topic at stake using natural language processing (NLP). Application possibilities of these tools are ample, ranging from businesses improving their products through online reviews to automated fraud and insider trading detection through monitoring analysts messaging behaviour and are thus of major importance for businesses, individuals and policy makers alike. 
-Building on \textcite{Liu.2012}, 
-%AND others
+Building on \textcite{Liu.2012,Feldman.2013,Silge.2017,Friedman.2001}, %AND others
 I derive a procedure to extract an opinion on published articles by major international newspapers and agencies in order to determine the prevalent public opinion on the nature of a target rate move by the FED.
 
 \subsection{Terminology}
 
-As texts are as typical example of unstructured data, it needs to be converted to structured data in order to perform meaningful analyses. Therefore, we follow \textcite{Liu.2010} in defining an opinion as the quintuple\footnote{Even though the literature on opinion mining takes subjectivity and emotion into account \parencite{Wiebe.2000,Wiebe.2004,Riloff.2006}, we refrain from doing so as the source of the data comes from professional and reviewed media sources exclusively and the aim of the analysis is not to determine how individuals feel about a certain product or situation but rather extract the summary of public opinion from a newspaper article statement.} 
+As texts are a typical example of unstructured data, it needs to be converted to structured data in order to perform meaningful analyses. Therefore, we follow \textcite{Liu.2010} in defining an opinion as the quintuple\footnote{Even though the literature on opinion mining takes subjectivity and emotion into account \parencite{Wiebe.2000,Wiebe.2004,Riloff.2006}, we refrain from doing so as the source of the data comes from professional and reviewed media sources exclusively and the aim of the analysis is not to determine how individuals feel about a certain product or situation but rather extract the summary of public opinion from a newspaper article statement.} 
 \begin{equation}
 	(e_j, a_{jk}, so_{ijkl}, h_i, t_l)
 \end{equation}
-where $e_j$ is the target entity which forms the opinion target together with $a_{jk}$, an aspect of the former; $so_{ijkl}$ refers to the sentiment value of the opinion source, $h_i$, on $a_{jk}$ of $e_j$ at time $t_l$.
+where $e_j$ is the target entity which forms the opinion target together with $a_{jk}$, an aspect of the former; $so_{ijkl}$ refers to the sentiment value of the opinion source, $h_i$, on $a_{jk}$ of $e_j$ at time $t_l$. 
 % e.g. entity is FED action, aspect is interest rate decision
 % omit opinion holders
-Since the first step of the analysis, the identification of relevant articles, as described in section\dots determines the opinion target while time and source are given exogenously, we focus on the discovering the sentiment of each text snippet. 
+Since the first step of the analysis, the identification of relevant articles as described in section~\ref{subsec:ArticleID}, determines the opinion target while time and source are given exogenously, we focus on the discovering the sentiment of each text snippet. 
 
-%how to get stuff out of the database: Long, Zhang and Zhu (2010) & Ma and Wan (2010)
 
-Part-of-Speech (POS) tags as presented in table~\vref{tab:POS_tags} are applied to the articles through a pre-trained model by \textcite{OpenNLP.2016} that assigns POS tags based on the probability of what the correct POS tag is for newspaper language and selects the one with highest probability.
+\subsection{Article identification}\label{subsec:ArticleID}
 
-% Sentence-Document model see \textcite{McDonald.2007} (Sentiment_Proceedings2007_p470) 2.1 ff for notation
+% how to get stuff out of the database: Long, Zhang and Zhu (2010) & Ma and Wan (2010)
 
-% pre-processing: remove stopwords, stemming, fuzzy matching (not needed here), etc
+\begin{itemize}
+	\item before 07: factiva by hand (+/- one day as in \textcite{Ellingsen.2003}; filter for topic \textit{monetary policy}, geographic location \textit{North America}, language \textit{English} and the words \textit{Fed}, \textit{Federal Reserve} and \textit{Interest Rate})
+	\item after 07: same as above for now
+	\item to be implemented: after 07: use before 07 articles and some after 07 articles determined through TA and let elastic chose similar articles around a date; see \textcite{Elastic.2015} 
+	% DATA: 
+	% pre-selection of articles done through, among others
+	% Elastic: https://www.elastic.co/guide/en/elasticsearch/guide/current/getting-started.html
+	% this way, elastic algo identifies relevant stuff over time and specific for the period after 07
+	% For future: check which words are typical for authors, see Jane Austin stuff in the textbook
+	\item refrain from using headlines (agencies just facts, comments which are essential have satirical touch)
+\end{itemize}
+%
 
-\subsection{Article identification}
-
-\dots 
-% before 07: factiva by hand (two days before, 4 after; filter for 'Währungspolitik', Nordamerika, English and a few buzzwords)
-% after 07: use before 07 articles and some after 07 articles determined through TA and let elastic chose similar articles around a date
-% this way, elastic algo identifies relevant stuff over time and specific for the period after 07
-
-% DATA: 
-% pre-selection of articles done through, among others, \textcite{Elastic.2015}
-% Elastic: https://www.elastic.co/guide/en/elasticsearch/guide/current/getting-started.html
-
-% For future: check which words are typical for authors, see Jane Austin stuff in the textbook
 
 \subsection{Pre-processing}
-POS etc, \dots
-As pointed out in \textcite{Hu.2004}, two techniques are most widely spread when it comes to discovering terms in corpora. Symbolic approaches that are based on terms such as noun phrases and their syntactic description encompass the first, statistical approaches the second while the latter make use of the fact that words composing a term a in close proximity to each other and reoccur. 
+
+After reading in the data by collecting all text snippets allocated to one FOMC meeting, a few manipulations have to be undertaken in order to prepare the text such that is feasible for quantitative analysis. The rationale for this is simply that a large part of the text does not contain useful information and would hence distort the results by adding too much noise and taking up computation power. This procedure is commonly referred to as \textit{pre-processing} and entails the removal of stop words and stemming as well as manipulations depending on the respective task.
+
+Apart from a few technical manipulations to make the input into \textit{R} easier, the pre-processing in this study begins by discarding all articles in a language other than English. The removal of stop words, i.e. terms that inherit no intrinsic meaning, is performed in two consecutive steps\footnote{Another approach is based on term-weighting as described in \textcite{Silge.2017} accompanied by their published \textit{R} package \textcite{tidytextpackage}. Since our articles are pre-selected in an earlier step, this procedure is deemed unnecessary, however.}. % tf-itf: https://cran.r-project.org/web/packages/tidytext/vignettes/tf_idf.html
+First, an algorithm is applied to tokenize every word in each text. These Part-of-Speech (POS) tags as presented in table~\vref{tab:POS_tags} are applied to the articles through a pre-trained model by \textcite{OpenNLP.2016} that assigns POS tags based on the probability of what the correct POS tag is for newspaper language and selects the one with highest probability. Once every word is tagged, those identified to have only subordinate or auxiliary purpose are discarded. Secondly, all remaining elements of the text are scanned for punctuation, numbers, unnecessary white space and de-capitalised while an extended built-in function filled with common stop words subtracts the remaining ones. Special care has been taken with valence shifters, presuppositional items and modal auxiliary verbs that have been combined to unigrams, i.e. terms without spaces. The pre-processing is concluded by stemming the terms left such that words from the same family in different conjugations are detected as equivalent\footnote{When it comes to customer reviews, sarcasm and opinion spam are two more important aspects to look for; since this exercise mainly contains facts about monetary policy and interpretation by market participants, I deem this problem to be of subordinate nature. In particular, since the vast magnitude of words per article relativises this issue.}. Once this manipulation is fulfilled, a corpus is formed from all pre-processed text files allocated to a target rate change. 
+% As pointed out in \textcite{Hu.2004}, two techniques are most widely spread when it comes to discovering terms in corpora. Symbolic approaches that are based on terms such as noun phrases and their syntactic description encompass the first, statistical approaches the second while the latter make use of the fact that words composing a term are in close proximity to each other and reoccur. 
+% Sentence-Document model see \textcite{McDonald.2007} (Sentiment_Proceedings2007_p470) 2.1 ff for notation
 
 
+%
 \subsection{Sentiment determination}
 
-In order to identify the sentiment of each text piece as endogenous or exogenous, a list of words and expressions has to be set up which can be done in three different ways as discussed in section~\ref{sec:Lit}. The most straight forward one, which has been chosen here for its comprehensible and deterministic nature, being manually setting it up in a one-time effort. 
+In order to identify the sentiment of each text piece as endogenous or exogenous, I apply a deterministic, count-based approach as well as state-of-the-art ML algorithms. While the latter have shown stable performance in text mining studies in different contexts, this exercise demands high precision and thus I chose not to rely on learning algorithms alone but created a deterministic algorithm that classifies target rate changes based on predefined terms as well as significance tests.
 
-% Describe pre-processing process top down
-% sufficient for our purposes to look for simple quant occurence of expressions, classification w/o increments as in rating
-% always has to be trained for specific purpose (c.f. every product needs new algorithm when rated)
+%
+\subsubsection{Count-based evaluation}
 
-% refrain from using headlines (agencies just facts, comments which are essential have satirical touch)
-
-% sentiment words chosen through söderström/ellingsen paper together with WordNet
-
-% reverse the polarity of a sentiment word whenever it is preceded by a negation.
-
+\dots a list of words and expressions has to be set up which can be done in three different ways as discussed in section~\ref{sec:Lit}. The most straight forward one, which has been chosen here for its comprehensible and deterministic nature, being manually setting it up in a one-time effort. The sentiment defining words are chosen such that they are representative for a endogenous or exogenous event as defined in \textcite{Ellingsen.2003} together with a synonym finder. The polarity is reversed whenever a term is preceded by a negation. In contrast to \textcite{Ellingsen.2003}, endogenous events are not defined residually..
 % use dimension correlation as in \textcite{Godbole.2007} for the descriptive stats
 
-% document based sentiment (in contrast to sentence-specific sentiment or aspect-specifi sentiment) as described in \texcite{Silge.2017} accompanied by their publish \textit{R} package \textcite{tidytextpackage}
-% tf-itf: https://cran.r-project.org/web/packages/tidytext/vignettes/tf_idf.html is used instead of stopword stripping but we don't do that since we pre-select articles s.t. content is similar
-% widely used term-weighting scheme according to wikipedia: https://en.wikipedia.org/wiki/Tf%E2%80%93idf -> not useful here since docs are pre-selected!
+In this discussion, it is sufficient to look for simple quantitative occurrence of expressions since, intuitively, crucial events as well as comments accompanying FOMC statements appear across many articles. Furthermore, the binary nature of the classification problem leads to analysing increments as common in ratings being negligible whereas dictionary-based methods usually find the total sentiment of a piece of text by adding up the individual sentiment scores for each word in the text \parencite{Silge.2017}. 
 
-% stuff to look out for
-% careful with valence shifters, presuppositional items and modal auxiliary verbs -> combine to unigram
-% sarcasm, on the other hand should play less of an important role since 'boring' facts are reported -> different in blogs
-% Opinion spam as in Jindal and Liu 2007, 2008 not an issue either
+Describe function \dots
 
+%
+Above that, the most common supervised learning techniques according to \textcite{Liu.2010} and \textcite{Feldman.2013} are applied as described below. Generally, train and test sets have to contain records that are representative of the entire dataset in order to yield internally valid parameters estimates. 
 
-% Dictionary-based methods like the ones we are discussing find the total sentiment of a piece of text by adding up the individual sentiment scores for each word in the text. (http://tidytextmining.com/sentiment.html)
-
-% PROBLEM: other stuff (QE) happened in the period, impacts bond rates -> include or neglect?
-
-% Add QE dummy in regressions
+\subsubsection{Na\"{i}ve Bayes} % Elements of statistical learning: p. 211
+TBC\dots
+R: The standard naive Bayes classifier (at least this implementation) assumes independence of the predictor variables, and Gaussian distribution (given the target class) of metric predictors.
 
 % Naive Bayes see IBM paper -> independent conditional probabilities assumption unrealistic:  certain word combinations tend to show up consistently
 % This hints as to why the independence assumption might not be so quite so idiotic. Since the prediction depends only the on the maximum, the algorithm will get it right even if there are dependencies between feature providing the dependencies do not change which class has the maximum probability (once again, note that only the maximal class is important here, not  the value of the maximum).
 %Yet another reason for the surprising success of Naïve Bayes is that dependencies often cancel out across a large set of features. But, of course, there is no guarantee that this will always happen. -> good for discrete dependent variables
 
+\subsubsection{Maximum entropy} % Elements of statistical learning: p.
+TBC\dots
 
-% train and test sets must contain records that are representative of the entire dataset
-
-% Fed target history, analyses about yield curve movements -> graph in descriptives?
-
-% TO METHODOLOGY: As suggested in the references above but in particular \textcite{Blinder.2010}, Fed chairman announced a lot of things that could have an impact but cannot be controlled for in the regressions in chatper later (coincide with other announcements, sample too small for that, some alone some accompany target rate decisions - include all or none)
-
-\subsubsection{Count-based evaluation}
-Intuitive
-
-% Elements of statistical learning
-% bayes: p. 211
-% knn: p. 463
-% svm p. 417
-
-\subsubsection{Na\"{i}ve bayes}
-R: The standard naive Bayes classifier (at least this implementation) assumes independence of the predictor variables, and Gaussian distribution (given the target class) of metric predictors.
-
-\subsubsection{Knn}
+\subsubsection{Knn} % Elements of statistical learning: p. 463
+TBC\dots
 R: k-nearest neighbour classification for test set from training set. For each row of the test set, the k
 nearest (in Euclidean distance) training set vectors are found, and the classification is decided by
 majority vote, with ties broken at random. If there are ties for the kth nearest vector, all candidates
 are included in the vote.
 
-\subsubsection{Support vector machines}
+\subsubsection{Support vector machines} % Elements of statistical learning: p. 417
+TBC\dots
 R: svm is used to train a support vector machine. It can be used to carry out general regression and
 classification (of nu and epsilon-type), as well as density-estimation. A formula interface is provided.
+
+\subsubsection{Classification and term structure of interest rates}
+
+\dots
+
+% PROBLEM: other stuff (QE) happened in the period, impacts bond rates -> include or neglect?
+
+% Add QE dummy in regressions
+
+% Fed target history, analyses about yield curve movements -> graph in descriptives?
+
+% TO METHODOLOGY: As suggested in the references above but in particular \textcite{Blinder.2010}, Fed chairman announced a lot of things that could have an impact but cannot be controlled for in the regressions in chatper later (coincide with other announcements, sample too small for that, some alone some accompany target rate decisions - include all or none)

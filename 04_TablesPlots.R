@@ -12,7 +12,7 @@
 
 # Federal funds targets table ---------------------------------------------
 # WHICH CLASSIFICATION TO TAKE? -> eg KNN (Tab_Class$KNN); later LDA
-OMO$Classification <- c("NA","Exog", rep.int("Endog",times=17),"Exog",
+OMO$Class <- c("NA","Exog", rep.int("Endog",times=17),"Exog",
                         "Endog","Exog","Endog","Exog", 
                         rep.int("Endog",times=5),"Exog","Exog", 
                         rep.int("Endog",times=3))
@@ -20,8 +20,8 @@ OMO$Classification <- c("NA","Exog", rep.int("Endog",times=17),"Exog",
 # export table to latex format
 library(xtable)
 #OMO$Date<-as.character(OMO$Date) # fix date
-#print(xtable(OMO[2:nrow(OMO),], align="llcrrrrrrrrrrrrrrrrr", digits=c(
-#                0,0,4,4,4,4,4,2,2,2,2,2,2,2,2,2,2,2,0,0), type="latex", 
+#print(xtable(OMO[2:nrow(OMO),], align="llcrrrrrrrrrrrrrrrr", digits=c(
+#                0,0,4,4,4,4,4,2,2,2,2,2,2,2,2,2,2,2,0), type="latex", 
 #             caption="Federal Funds Target Rates.",
 #             label = "tab:FEDfundstgt"), 
 #      sanitize.text.function = function(x){x}, include.rownames=F,
@@ -68,7 +68,6 @@ mtext("QE3", side = 1, line = 0, outer = FALSE,
 # Endog vs Exog Days Plots ------------------------------------------------
 # c.f. p. 15ff ES paper
 
-# WHICH CLASSIFICATION TO TAKE? -> eg KNN (later LDA)
 #OMO$Classification <- Tab_Class$KNN
 # Yield curve data only from 2002
 
@@ -87,12 +86,12 @@ for(i in 1:nrow(DeltaYieldCurves)){
     DeltaYieldCurves$Ex[i]    <- 0
   }
   else{
-    if(OMO$Classification[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Endog"){
+    if(OMO$Class[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Endog"){
       DeltaYieldCurves$NP[i]    <- 0
       DeltaYieldCurves$End[i]   <- 1
       DeltaYieldCurves$Ex[i]    <- 0
     }
-    if(OMO$Classification[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Exog"){
+    if(OMO$Class[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Exog"){
       DeltaYieldCurves$NP[i]    <- 0      
       DeltaYieldCurves$End[i]   <- 0
       DeltaYieldCurves$Ex[i]    <- 1
@@ -189,7 +188,7 @@ library(xtable)
 #             caption="Yield curve response to short rate movements on classified policy days.",
 #             label = "tab:EndogvsExogdays"), 
 #      sanitize.text.function = function(x){x}, include.rownames=F,
-#      booktabs=TRUE, caption.placement="top", 
+#      booktabs=TRUE, caption.placement="top", size="\\small",
 #      file="Text/chapters/tables_graphs/EndogvsExogdays.tex")
 
 
@@ -246,9 +245,8 @@ library(xtable)
 #             caption="Yield curve response to short rate movements on policy days and non-policy days.",
 #             label = "tab:NPvsPdays"), 
 #      sanitize.text.function = function(x){x}, include.rownames=F,
-#      booktabs=TRUE, caption.placement="top", 
+#      booktabs=TRUE, caption.placement="top", size="\\small",
 #      file="Text/chapters/tables_graphs/NPvsPdays.tex")
-
 
 
 
