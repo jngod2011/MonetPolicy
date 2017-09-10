@@ -66,36 +66,100 @@ Even though \textcite{Meyer2008} describe this procedure as sufficient, varying 
 Since across the data mining literature as pointed out in section~\ref{sec:Lit}, machine learning techniques receive more attention and trust than simple count-based approaches, I selected a few articles with obvious sentiment as training set which I extend with the text snippets from \textcite{Ellingsen.2003} and train the most common supervised learning techniques according to \textcite{Liu.2010} and \textcite{Feldman.2013}. Generally, train and test sets have to contain records that are representative of the entire dataset in order to yield internally valid parameters estimates which is why I took all articles for the training set from the remaining ones and selected a few across all dates. 
 
 \subsubsection{Na\"{i}ve Bayes} % Elements of statistical learning: p. 211
-TBC\dots
-R: The standard naive Bayes classifier (at least this implementation) assumes independence of the predictor variables, and Gaussian distribution (given the target class) of metric predictors.
 
-% Naive Bayes see IBM paper -> independent conditional probabilities assumption unrealistic:  certain word combinations tend to show up consistently
-% This hints as to why the independence assumption might not be so quite so idiotic. Since the prediction depends only the on the maximum, the algorithm will get it right even if there are dependencies between feature providing the dependencies do not change which class has the maximum probability (once again, note that only the maximal class is important here, not  the value of the maximum).
-%Yet another reason for the surprising success of Naïve Bayes is that dependencies often cancel out across a large set of features. But, of course, there is no guarantee that this will always happen. -> good for discrete dependent variables
+\textcite[p.~211]{Friedman.2001} list the Na\"{i}ve Bayes (NB) classifier among the linear methods for classification, as a variant of linear discriminant analysis. As such, it adapts the loss function to the fact that the output variable $G$ is categorical such that prediction errors are penalised appropriately. Utilising a zero-one loss function in which every misclassification is charged one single unit, \textcite[pp.~20-21]{Friedman.2001} simplify the expected prediction error $EPE=E[L(G,\hat{G}(X))]$ such that the 
+%
+\begin{equation}
+	\hat{G} = \underset{g\in \mathcal{G}}{max}\, Pr(g|X=x)
+\end{equation}
+%
+conveys the intuition that classification is done to the most probable case in which the conditional discrete distribution $Pr(G,X)$ is used. NB enhances this approach by assuming that the inputs are conditionally independent in each class, i.e. that every class density is a product of marginal densities. Even though this assumption is generally not fulfilled as certain word combinations appear consistently, \textcite{Friedman.2001} as well as \textcite{Rish.2001} emphasise that it outperforms more sophisticated alternatives in many cases. One reason for this is that the prediction depends only on the maximum probability, not its actual value. Furthermore, dependencies cancel out in many cases when working with a large set of features. 
 
-\subsubsection{Maximum entropy} % Elements of statistical learning: p.
-TBC\dots
+%
+\subsubsection{Maximum entropy} % Elements of statistical learning: p.119
+Maximum entropy (ME), on the other hand, as described in \textcite{Berger.1996} does not impose the restrictive conditional independence assumption and can be applied when underlying distributions are not know ex ante. 
+% c.f. http://blog.datumbox.com/machine-learning-tutorial-the-max-entropy-text-classifier/ and \textcite{Pang.2002}
+This is achieved in the machine learning context through a training set that produces output values $y$ from a finite set $\mathcal{Y}$ while the inputs $x$ are from $\mathcal{X}$. Their empirical probability distribution is
+%
+\begin{equation*}
+	\tilde{p}(x,y) = \frac{1}{N}\times number\, of\, times\, that\, (x,y)\, occurs\, in\, the\, sample
+\end{equation*}
+%
+where $N$ is the size of the training set. Furthermore, introducing an indicator function, often referred to as \textit{feature},
+%
+\begin{equation*}
+	f_j(x,y) = 
+				\begin{cases}
+					1 &\text{ if } y = c_i \text{ and $x$ contains $w_k$},\\
+					0 & \text{otherwise }
+				\end{cases}
+\end{equation*}
+%
+in which $c_i$ denotes a member of the different classes $\mathcal{C}$ possible while $w_k$ is a word. That means the indicator function returns the value one if a document belongs to class $c_i$ and contains the word $w_k$. Based on their features, \textcite{Berger.1996} show that the model $p^*$ should be selected to be as close as possible to uniform according to the ME principle
+%
+\begin{equation}
+	p^* = \underset{p\in \mathcal{C}}{arg\, max} \big(-\sum_{x,y}\tilde{p}(x)p(y|x)log\, p(y|x)\big)
+\end{equation}
+%
+which can be solved through a Lagrangian approach where the multipliers can be estimated through an iterative scaling algorithm.
 
+%
 \subsubsection{Knn} % Elements of statistical learning: p. 463
-TBC\dots
-R: k-nearest neighbour classification for test set from training set. For each row of the test set, the k
-nearest (in Euclidean distance) training set vectors are found, and the classification is decided by
-majority vote, with ties broken at random. If there are ties for the kth nearest vector, all candidates
-are included in the vote.
+
+As stated in \textcite[p.~465]{Friedman.2001}, \textit{k}-nearest-neighbours is best applied in settings where every class has a lot of different prototypes and the decision boundary is irregular. Above that, this family of classifiers does not need a model to fit as it is memory-based. It works with a query point $x_0$ for which the \textit{k} training points $x_{(r)},\, r=1,\dots,k$ are found which are the closest to $x_0$, according to some distance metric. In the article classification task, for every row of the test set Corpus, the \textit{k} closest training set vectors, as determined through Euclidean distance, are found and the classification is achieved through majority vote where ties are broken at random. Should there be ties for the \textit{k}th nearest vector, all candidates are included in the vote as stated in the \textit{R} package documentation. 
+% http://www.math.le.ac.uk/people/ag153/homepage/KNN/OliverKNN_Talk.pdf
+
 
 \subsubsection{Support vector machines} % Elements of statistical learning: p. 417
-TBC\dots
-R: svm is used to train a support vector machine. It can be used to carry out general regression and
-classification (of nu and epsilon-type), as well as density-estimation. A formula interface is provided.
 
+Finally, support vector machines (svm) perform well, according to \textcite[p.~293]{Williams.2011}, on assignments that are non-linear, sparse and high-dimensional. The underlying rationale is to transform the data such that the classes in the training set become linearly separable by a hyperplane. The classification is then conducted by transforming new data in the same way as in the training set and determine on which side of the hyperplane the points of interest lie. A mathematical representation of this concept is not included in this discussion since too many technicalities would have to be introduced; the basics are explained, however, in \textcite[p.~417]{Friedman.2001}. 
+
+%
 \subsubsection{Classification and term structure of interest rates}
 
-\dots
+All ML algorithms are performed through the standard function in the \textit{R} software package\dots
 
+\textcite{Ellingsen.2003} run two regressions to test their model once the classification is complete. First, they test their theory whether the relationship between long and short rates differs on policy days and non-policy days. For that purpose, they estimate the regression
+%
+\begin{equation}
+	\label{eq:PvsNP}
+	\Delta i_t^n = \alpha_n + (\beta_n^{NP}d_t^{NP}+\beta_n^{P}d_t^{P})\Delta i_t^{3m}+\nu_t^n
+\end{equation}
+%
+where $\Delta i_t$ describes the change in the interest rate on day $t$ and its respective subscript denotes its maturity; $d_t$ are dummy variables for policy and non-policy days and $\nu_t^n$ is the standard idiosyncratic error. Hereby, they try to find evidence for their first hypothesis 
+%
+\begin{hypothesis}
+	\label{H:1}
+	For large n, $\beta_n^P$ < $\beta_n^{NP}$.
+\end{hypothesis}
+%
+
+Secondly, \textcite{Ellingsen.2003} investigate whether the long and short rates behave differently on policy days classified as endogenous or exogenous as well as whether non-policy days have a similar impact as endogenous policy days. Therefore, 
+%
+\begin{equation}
+	\label{eq:EndvsEx}
+	\Delta i_t^n = \alpha_n + (\beta_n^{NP}d_t^{NP}+\beta_n^{End}d_t^{End}+\beta_n^{Ex}d_t^{Ex})\Delta i_t^{3m}+\nu_t^n
+\end{equation}
+%
+is estimated where $d_t^{m}$, $m\in \{End;Ex\}$ are dummy variables taking the value of one if the corresponding day has been classified as endogenous or exogenous. From their theoretic model, hypotheses~\ref{H:2} through \ref{H:4} are formulated such that
+\begin{hypothesis}
+	\label{H:2}
+	For large n, $\beta_n^{Ex}$ < 0 < $\beta_n^{End}$,
+\end{hypothesis}
+%
+\begin{hypothesis}
+	\label{H:3}
+	$\beta_n^{NP} = \beta_n^{End} = 0$ $\forall$ $n$,
+\end{hypothesis}
+%
+\begin{hypothesis}
+	\label{H:4}
+	$\beta_n^{j}$ is decreasing in n for j = NP, End.
+\end{hypothesis}
+%
+
+Since this discussion covers a time period with interest rates at the ZLB and central banks on the verge of inability to use their traditional means of interference, other announcements have been delivered such as the various QE programs described in section~\ref{sec:Lit}. As comparable announcements of unconventional monetary policy are not present during the sample period of \textcite{Ellingsen.2003} but impact financial markets as pointed out in \textcite{Hattori.2016}, I run the regressions in equation~\ref{eq:PvsNP} and \ref{eq:EndvsEx} with an additional dummy interaction for a QE coefficient as control. 
 % PROBLEM: other stuff (QE) happened in the period, impacts bond rates -> include or neglect?
-
-% Add QE dummy in regressions
-
-% Fed target history, analyses about yield curve movements -> graph in descriptives?
+Even though this should increase the credibility of the model, the sample period is heavily affected by the events of the financial crisis and thus many of the Fed chairman announcements will have triggered market responses as stated in \textcite{Blinder.2010} even though not all of them cannot be controlled for as they are of ambiguous nature or concur with other statements and report releases and hence, their effects cannot be disentangled clearly in such a limited sample size.
 
 % TO METHODOLOGY: As suggested in the references above but in particular \textcite{Blinder.2010}, Fed chairman announced a lot of things that could have an impact but cannot be controlled for in the regressions in chatper later (coincide with other announcements, sample too small for that, some alone some accompany target rate decisions - include all or none)
