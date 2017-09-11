@@ -49,7 +49,7 @@ First, an algorithm is applied to tokenize every word in each text. These Part-o
 %
 \subsection{Sentiment determination}
 
-In order to identify the sentiment of each text piece as endogenous or exogenous, I apply a deterministic, count-based approach as well as state-of-the-art ML algorithms. While the latter have shown stable performance in text mining studies in different contexts, this exercise demands high precision and thus I chose not to rely on learning algorithms alone but created a deterministic algorithm that classifies target rate changes based on predefined terms as well as significance tests.
+In order to identify the sentiment of each text piece as endogenous or exogenous, I apply a deterministic, count-based (CB) approach as well as state-of-the-art ML algorithms. While the latter have shown stable performance in text mining studies in different contexts, this exercise demands high precision and thus I chose not to rely on learning algorithms alone but created a deterministic algorithm that classifies target rate changes based on predefined terms as well as significance tests.
 
 %
 \subsubsection{Count-based evaluation}
@@ -117,9 +117,14 @@ Finally, support vector machines (svm) perform well, according to \textcite[p.~2
 %
 \subsubsection{Classification and term structure of interest rates}
 
-All ML algorithms are performed through the standard function in the \textit{R} software package\dots
+All ML algorithms are performed through the standard function in the \textit{R} software package; their classifications are listen in table~\vref{tab:Tab_Class}.
+%
+% Classification table
+\input{chapters/tables_graphs/Tab_Class.tex}
+%
+It is obvious that the NB model strongly prefers the endogenous classification while knn determines most decisions to be exogenous. ME and SVM appear to be slightly more attentive towards the sentiment in the articles but come to different conclusions as well. Even though the ML learning methods come with a classification certainty\footnote{I chose not to include the probabilities for every article classification by method for purposes of readability. Furthermore, since results diverge this strong, they do not add significant value or credibility to the respective results.}, it is apparent that the endogeneity/exogeneity task is too much of a specialised task as it builds upon very detailed formulations in the texts for which the training sample is simply too small, in particular for such an extensive action set. As the count-based algorithm includes a significance test across articles for every adjustment date, I base the selection for the final classification on the latter  and refer to the most promising of the ML techniques whenever CB returned an ambiguous classification; the list of OMOs with corresponding classification is outlined in table~\vref{tab:FEDfundstgt}. 
 
-\textcite{Ellingsen.2003} run two regressions to test their model once the classification is complete. First, they test their theory whether the relationship between long and short rates differs on policy days and non-policy days. For that purpose, they estimate the regression
+Based on their classification, \textcite{Ellingsen.2003} run two regressions to test their model of market interest rates and target adjustments. First, they test their theory whether the relationship between long and short rates differs on policy days and non-policy days. For that purpose, they estimate the regression
 %
 \begin{equation}
 	\label{eq:PvsNP}
@@ -162,4 +167,10 @@ Since this discussion covers a time period with interest rates at the ZLB and ce
 % PROBLEM: other stuff (QE) happened in the period, impacts bond rates -> include or neglect?
 Even though this should increase the credibility of the model, the sample period is heavily affected by the events of the financial crisis and thus many of the Fed chairman announcements will have triggered market responses as stated in \textcite{Blinder.2010} even though not all of them cannot be controlled for as they are of ambiguous nature or concur with other statements and report releases and hence, their effects cannot be disentangled clearly in such a limited sample size.
 
-% TO METHODOLOGY: As suggested in the references above but in particular \textcite{Blinder.2010}, Fed chairman announced a lot of things that could have an impact but cannot be controlled for in the regressions in chatper later (coincide with other announcements, sample too small for that, some alone some accompany target rate decisions - include all or none)
+%
+\subsection{Model performance}
+
+\begin{itemize}
+	\item  include confusion matrix/ratio for every classification algorithm
+\end{itemize}
+%

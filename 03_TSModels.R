@@ -99,8 +99,10 @@ for(j in 2:ncol(TargetRates)){
 
 # Table for results
 Tab_Class <- data.frame("Date"=OMO$Date, "Deterministic"=NA, "Deterministic_end"=NA, 
-                        "Deterministic_ex"=NA, "Bayes"=NA, "Bayes_end"=NA, 
-                        "Bayes_ex"=NA,"KNN"=NA, "KNN_end"=NA, "KNN_ex"=NA, 
+                        "Deterministic_ex"=NA, 
+                        "Bayes"=NA, "Bayes_end"=NA, "Bayes_ex"=NA,
+                        "ME"=NA, "ME_end"=NA, "ME_ex"=NA, 
+                        "KNN"=NA, "KNN_end"=NA, "KNN_ex"=NA, 
                         "SVM"=NA, "SVM_end"=NA, "SVM_ex"=NA)
 
 # Get classification ------------------------------------------------------
@@ -215,6 +217,84 @@ tdm.class <- tdm.stack[,"targetclass"]
 tdm.class <- tdm.class[tdm.class=="Endog" | tdm.class=="Exog"]
 tdm.stack.nl <- tdm.stack[,!colnames(tdm.stack)%in%"targetclass"]
 
+# get date of article
+ArticleDates <- tdm.stack[,"targetclass"]
+ArticleDates <- ArticleDates[ArticleDates!="Endog" & ArticleDates!="Exog"]
+
+# Naive Bayes -------------------------------------------------------------
+
+#library(RTextTools)
+library(e1071)
+NaiBayclassifier <- naiveBayes(as.matrix(tdm.stack.nl[seq(tdm.class),]), # test texts dtm as matrix
+                               as.factor(tdm.class)) # test classifications
+
+NaiBay.pred <- predict(NaiBayclassifier, # class element
+                       tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],]) # action set 
+
+# Enter results in Tab_Class table
+tmp_NaiBay.pred.tab  <- data.frame("Date"=ArticleDates, "NaiBay.class"= NaiBay.pred)
+
+for(i in seq(length(OMO$Date))){
+  Tab_Class$Bayes_end[i] <- nrow(tmp_NaiBay.pred.tab[which(
+    tmp_NaiBay.pred.tab$Date==as.character(OMO$Date[i])&
+      tmp_NaiBay.pred.tab$NaiBay.class=="Endog"),])
+  Tab_Class$Bayes_ex[i]  <- nrow(tmp_NaiBay.pred.tab[which(
+    tmp_NaiBay.pred.tab$Date==as.character(OMO$Date[i])&
+      tmp_NaiBay.pred.tab$NaiBay.class=="Exog"),])
+  if(Tab_Class$Bayes_end[i]>Tab_Class$Bayes_ex[i]){
+    Tab_Class$Bayes[i] <- "Endog"}
+  else{
+    if(Tab_Class$Bayes_end[i]<Tab_Class$Bayes_ex[i]){
+      Tab_Class$Bayes[i] <-"Exog"}
+    else{Tab_Class$Bayes[i] <-"Ambig"}
+  }
+}
+rm(tmp_NaiBay.pred.tab)
+
+
+
+# Maximum Entropy ---------------------------------------------------------
+
+# see https://www.r-bloggers.com/sentiment-analysis-with-machine-learning-in-r/
+
+library(RTextTools)
+
+# Configure the training data
+Test_container <- create_container(tdm.stack.nl[seq(tdm.class),], # train set dtm
+                                   as.numeric(as.factor(tdm.class)),# train set classification
+                                   trainSize=seq(tdm.class), # train index
+                                   virgin=FALSE)
+# train a SVM Model
+MEclassifier <- train_model(Test_container, "MAXENT", kernel="linear", cost=1)
+
+# create the corresponding prediction container
+Act_container <- create_container(tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],], # action set dtm
+                                  labels=rep(0,length(seq(nrow(tdm.stack.nl))[-seq(tdm.class)])), # empty class
+                                  testSize=1:length(seq(nrow(tdm.stack.nl))[-seq(tdm.class)]),  # test index
+                                  virgin=FALSE)
+
+me.pred <- classify_model(Act_container, MEclassifier) # 1: endog, 2: exog
+
+# Enter results in Tab_Class table
+tmp_me.pred.tab  <- data.frame("Date"=ArticleDates, "ME.class"= me.pred$MAXENTROPY_LABEL)
+
+for(i in seq(length(OMO$Date))){
+  Tab_Class$ME_end[i] <- nrow(tmp_me.pred.tab[which(
+                              tmp_me.pred.tab$Date==as.character(OMO$Date[i])&
+                                tmp_me.pred.tab$ME.class=="1"),])
+  Tab_Class$ME_ex[i]  <- nrow(tmp_me.pred.tab[which(
+                              tmp_me.pred.tab$Date==as.character(OMO$Date[i])&
+                                tmp_me.pred.tab$ME.class=="2"),])
+  if(Tab_Class$ME_end[i]>Tab_Class$ME_ex[i]){
+    Tab_Class$ME[i] <- "Endog"}
+  else{
+    if(Tab_Class$ME_end[i]<Tab_Class$ME_ex[i]){
+      Tab_Class$ME[i] <-"Exog"}
+    else{Tab_Class$ME[i] <-"Ambig"}
+  }
+}
+rm(tmp_me.pred.tab)
+
 
 # KNN ---------------------------------------------------------------------
 
@@ -222,10 +302,6 @@ library(class)
 knn.pred <- knn(tdm.stack.nl[seq(tdm.class),], # train set w/o classification
                 tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],], # action set
                 tdm.class) # classification for training set
-
-# get date of article and attach KNN prediction
-ArticleDates <- tdm.stack[,"targetclass"]
-ArticleDates <- ArticleDates[ArticleDates!="Endog" & ArticleDates!="Exog"]
 
 # Enter results in Tab_Class table
 
@@ -243,42 +319,11 @@ for(i in seq(length(OMO$Date))){
   else{
     if(Tab_Class$KNN_end[i]<Tab_Class$KNN_ex[i]){
           Tab_Class$KNN[i] <-"Exog"}
-    else{Tab_Class$KNN[i] <-"Ambiguous"}
+    else{Tab_Class$KNN[i] <-"Ambig"}
   }
 }
-
 rm(tmp_KNN.pred.tab)
 
-
-# Naive Bayes -------------------------------------------------------------
-
-#library(RTextTools)
-library(e1071)
-NaiBayclassifier <- naiveBayes(as.matrix(tdm.stack.nl[seq(tdm.class),]), # test texts dtm as matrix
-                         as.factor(tdm.class)) # test classifications
-
-NaiBay.pred <- predict(NaiBayclassifier, # class element
-                       tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],]) # action set 
-
-# Enter results in Tab_Class table
-tmp_NaiBay.pred.tab  <- data.frame("Date"=ArticleDates, "NaiBay.class"= NaiBay.pred)
-
-for(i in seq(length(OMO$Date))){
-  Tab_Class$Bayes_end[i] <- nrow(tmp_NaiBay.pred.tab[which(
-                                 tmp_NaiBay.pred.tab$Date==as.character(OMO$Date[i])&
-                                 tmp_NaiBay.pred.tab$NaiBay.class=="Endog"),])
-  Tab_Class$Bayes_ex[i]  <- nrow(tmp_NaiBay.pred.tab[which(
-                                 tmp_NaiBay.pred.tab$Date==as.character(OMO$Date[i])&
-                                 tmp_NaiBay.pred.tab$NaiBay.class=="Exog"),])
-  if(Tab_Class$Bayes_end[i]>Tab_Class$Bayes_ex[i]){
-              Tab_Class$Bayes[i] <- "Endog"}
-  else{
-    if(Tab_Class$Bayes_end[i]<Tab_Class$Bayes_ex[i]){
-              Tab_Class$Bayes[i] <-"Exog"}
-    else{Tab_Class$Bayes[i] <-"Ambiguous"}
-  }
-}
-rm(tmp_NaiBay.pred.tab)
 
 
 # SVM ---------------------------------------------------------------------
@@ -315,16 +360,36 @@ for(i in seq(length(OMO$Date))){
   if(Tab_Class$SVM_end[i]>Tab_Class$SVM_ex[i]){
                     Tab_Class$SVM[i] <- "Endog"}
   else{
-    if(Tab_Class$Bayes_end[i]<Tab_Class$Bayes_ex[i]){
+    if(Tab_Class$SVM_end[i]<Tab_Class$SVM_ex[i]){
                     Tab_Class$SVM[i] <-"Exog"}
-    else{Tab_Class$Bayes[i] <-"Ambiguous"}
+    else{Tab_Class$SVM[i] <-"Ambig"}
   }
 }
 rm(tmp_svm.pred.tab)
 
 
-# add maxent?
-# https://www.r-bloggers.com/sentiment-analysis-with-machine-learning-in-r/
+# Export classification table ---------------------------------------------
+
+colnames(Tab_Class)             <- c("Date",
+                                     "$CB$", "$CB_{end}$", "$CB_{ex}$",
+                                     "$NB$", "$NB_{end}$", "$NB_{ex}$",
+                                     "$ME$", "$ME_{end}$", "$ME_{ex}$",
+                                     "$KNN$", "$KNN_{end}$", "$KNN_{ex}$",
+                                     "$SVM$", "$SVM_{end}$", "$SVM_{ex}$")
+
+# export table to latex format
+library(xtable)
+Tab_Class$Date<-as.character(OMO$Date) # fix date for latex export
+print(xtable(Tab_Class, align="llrrrrrrrrrrrrrrr", type="latex", 
+             digits=c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
+             caption = "Classification according to different text mining methods.",
+             label = "tab:Tab_Class"), 
+      sanitize.text.function = function(x){x}, include.rownames=F,
+      booktabs=TRUE, caption.placement="top", floating.environment='sidewaystable',
+      size="\\fontsize{8pt}{9pt}\\selectfont",
+      file="Text/chapters/tables_graphs/Tab_Class.tex")
+
+#Tab_Class$Date                   <- as.Date(OMO$Date,"%Y-%m-%d") # right date format
 
 # Model performance -------------------------------------------------------
 
@@ -357,91 +422,6 @@ rm(knn_pred_PERF,knn_conf.mat)
 # svm
 
 rm(train.idx,test.idx)
-
-# LDA ---------------------------------------------------------------------
-
-# read: http://tidytextmining.com/topicmodeling.html
-library(topicmodels)
-generateDTM <- function(Corpus){
-  cl.cor <- Corpus$corp
-  OMOdate <- Corpus$name
-  cl.tdm <- DocumentTermMatrix(cl.cor)
-  #cl.tdm <- removeSparseTerms(cl.tdm, 0.7)
-  result <- list(name = OMOdate, dtm = cl.tdm)
-}
-
-#load("Corpi_Factiva.RData")
-dtm_act <- lapply(Corpi, generateDTM)
-
-dtm_act[[1]]$dtm
-
-# documents as mixture of words
-
-# set a seed so that the output of the model is predictable
-news_lda <- LDA(dtm_act[[1]]$dtm, k = 2, control = list(seed = 40888))
-news_lda
-
-library(tidytext)
-
-news_topics <- tidy(news_lda, matrix = "beta")
-news_topics
-
-library(ggplot2)
-library(dplyr)
-
-# per-topic-per-word probabilities, called beta, from the model
-news_top_terms <- news_topics %>%
-  group_by(topic) %>%
-  top_n(10, beta) %>%
-  ungroup() %>%
-  arrange(topic, -beta)
-
-news_top_terms %>%
-  mutate(term = reorder(term, beta)) %>%
-  ggplot(aes(term, beta, fill = factor(topic))) +
-  geom_col(show.legend = FALSE) +
-  facet_wrap(~ topic, scales = "free") +
-  coord_flip()
-
-# greatest difference in beta between topic 1 and topic 2
-library(tidyr)
-
-beta_spread <- news_topics %>%
-  mutate(topic = paste0("topic", topic)) %>%
-  spread(topic, beta) %>%
-  filter(topic1 > .001 | topic2 > .001) %>%
-  mutate(log_ratio = log2(topic2 / topic1))
-
-beta_spread
-
-beta_spread %>%
-  mutate(term = reorder(term, log_ratio)) %>%
-  arrange(desc(abs(log_ratio))) %>%
-  head(50) %>%
-  mutate(term = reorder(term, log_ratio)) %>%  
-  ggplot(aes(term, log_ratio, fill = log_ratio > 0)) +
-  geom_col(show.legend = FALSE) +
-  xlab("term") +
-  ylab("Log2 ratio of beta in topic 2 / topic 1") +  
-  coord_flip()
-
-## documents as mixture of topics
-
-news_documents <- tidy(news_lda, matrix = "gamma")
-news_documents
-
-# most common words in doc
-tidy(dtm_act[[1]]$dtm) %>%
-  filter(document == 1) %>%
-  arrange(desc(count))
-
-
-
-
-# Text Classification and Topic Modelling ---------------------------------
-
-# supervised SVM, predefine topics
-# https://brazenly.blogspot.de/2016/05/r-text-classification-and-topic_1.html
 
 
 ####################################################

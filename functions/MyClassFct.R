@@ -85,32 +85,32 @@ function(Corpus.untagged,endog.words,exog.words,conf.level=0.05){
       TabScore[i,3] <- 1
     }
     if(results[i,1] == 0){
-      TabScore[i,1] <- "Ambiguous"
+      TabScore[i,1] <- "Ambig"
     }
   }
   
   conf.level <- conf.level
 
-  classif <- if(mean(TabScore$Endog,na.rm = T)==1){"Endogenous"
+  classif <- if(mean(TabScore$Endog,na.rm = T)==1){"Endog"
                                             #print("Endogenous") # all are endog
-    }else{if(mean(TabScore$Exog,na.rm = T)==1){"Exogenous"
-                                            #print("Exogenous") # all are exog
+    }else{if(mean(TabScore$Exog,na.rm = T)==1){"Exog"
+                                            #print("Exog") # all are exog
       }else{ # t-test if not unanimous
   if(
     t.test(TabScore$Endog,TabScore$Exog, alternative="greater", 
            mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value <
     conf.level){
-    "Endogenous"
+    "Endog"
     #print("Endogenous")
   } else{
     if(
       t.test(TabScore$Endog,TabScore$Exog, alternative="less", 
              mu = 0, paired= FALSE, var.equal= FALSE, conf.level = 0.95)$p.value <
       conf.level){
-      "Exogenous"
+      "Exog"
       #print("Exogenous")
     } else{
-      "Ambiguous"
+      "Ambig"
       #print("Ambiguous")
     }
   }
