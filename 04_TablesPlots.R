@@ -12,23 +12,22 @@
 
 # Federal funds targets table ---------------------------------------------
 # WHICH CLASSIFICATION TO TAKE? -> eg KNN (Tab_Class$KNN); later LDA
-OMO$Class <- c("NA","Exog", rep.int("Endog",times=17),"Exog",
-                        "Endog","Exog","Endog","Exog", 
-                        rep.int("Endog",times=5),"Exog","Exog", 
-                        rep.int("Endog",times=3))
+OMO$Class[1] <- "NA"
+OMO$Class[c(2,3,6,8,9,10,16,18,19,20,31)] <- "Exog"
+OMO$Class[c(4,5,7,11:15,17,21:30,32,33,34)] <- "Endog"
 
 # export table to latex format
 library(xtable)
 #OMO$Date<-as.character(OMO$Date) # fix date
 #print(xtable(OMO[2:nrow(OMO),], align="llcrrrrrrrrrrrrrrrr", digits=c(
 #                0,0,4,4,4,4,4,2,2,2,2,2,2,2,2,2,2,2,0), type="latex", 
-#             caption="Federal Funds Target Rates.",
+#             caption="Federal Funds target rate changes.",
 #             label = "tab:FEDfundstgt"), 
 #      sanitize.text.function = function(x){x}, include.rownames=F,
 #      booktabs=TRUE, caption.placement="top", floating.environment='sidewaystable',
 #      size="\\fontsize{8pt}{9pt}\\selectfont",
 #      file="Text/chapters/tables_graphs/FEDfundstgt.tex")
-
+#OMO$Date                   <- as.Date(OMO$Date,"%Y-%m-%d") # back to normal
 
 # Fed Funds vs Int Rate Plots ---------------------------------------------
 
@@ -66,9 +65,9 @@ mtext("QE3", side = 1, line = 0, outer = FALSE,
 
 
 # Endog vs Exog Days Plots ------------------------------------------------
+
 # c.f. p. 15ff ES paper
 
-#OMO$Class <- Tab_Class$KNN
 # Yield curve data only from 2002
 
 DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
@@ -159,19 +158,19 @@ for(k in 4:(ncol(DeltaYieldCurves)-3)){
   Tab_EndvsExdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
   Tab_EndvsExdays[2,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[1,4],2)),format="f",digits=2)
-  )),")") # std intercept
+  )),")") # p-V intercept
   Tab_EndvsExdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
   Tab_EndvsExdays[4,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[2,4],2)),format="f",digits=2)
-  )),")") # std beta NP
+  )),")") # p-V beta NP
   Tab_EndvsExdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta End
   Tab_EndvsExdays[6,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[3,4],2)),format="f",digits=2)
-  )),")") # std beta End
+  )),")") # p-V beta End
   Tab_EndvsExdays[7,j]  <- round(summary(myreg)$coef[4,1],2) # beta Ex
   Tab_EndvsExdays[8,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[4,4],2)),format="f",digits=2)
-  )),")") # std beta Ex
+  )),")") # p-V beta Ex
   Tab_EndvsExdays[9,j]  <- round(summary(myreg)$r.squared,2) # R^2
   # add D-W statistic?
   Tab_EndvsExdays[10,j]  <- formatC(abs(round(linearHypothesis(myreg, # test equality param NP & End
@@ -223,15 +222,15 @@ for(k in 4:(ncol(DeltaYieldCurves)-2)){
   Tab_NPvsPdays[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
   Tab_NPvsPdays[2,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[1,4],2)),format="f",digits=2)
-  )),")") # std intercept
+  )),")") # p-V intercept
   Tab_NPvsPdays[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
   Tab_NPvsPdays[4,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[2,4],2)),format="f",digits=2)
-  )),")") # std beta NP
+  )),")") # p-V beta NP
   Tab_NPvsPdays[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta P
   Tab_NPvsPdays[6,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[3,4],2)),format="f",digits=2)
-  )),")") # std beta P
+  )),")") # p-V beta P
   Tab_NPvsPdays[7,j]  <- round(summary(myreg)$r.squared,2) # R^2
   # add D-W statistic?
   Tab_NPvsPdays[8,j]  <- formatC(abs(round(linearHypothesis(myreg,
@@ -302,19 +301,19 @@ for(k in 4:(ncol(DeltaYieldCurves)-3)){
   Tab_NPvsPdays_QE[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
   Tab_NPvsPdays_QE[2,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[1,4],2)),format="f",digits=2)
-  )),")") # std intercept
+  )),")") # p-V intercept
   Tab_NPvsPdays_QE[3,j]  <- round(summary(myreg)$coef[3,1],2) # beta NP
   Tab_NPvsPdays_QE[4,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[3,4],2)),format="f",digits=2)
-  )),")") # std beta NP
+  )),")") # p-V beta NP
   Tab_NPvsPdays_QE[5,j]  <- round(summary(myreg)$coef[4,1],2) # beta P
   Tab_NPvsPdays_QE[6,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[4,4],2)),format="f",digits=2)
-  )),")") # std beta P
+  )),")") # p-V beta P
   Tab_NPvsPdays_QE[7,j]  <- round(summary(myreg)$coef[2,1],2) # beta QE
   Tab_NPvsPdays_QE[8,j]  <- paste0("(", format(unlist(
     formatC(abs(round(summary(myreg)$coef[2,4],2)),format="f",digits=2)
-  )),")") # std beta QE
+  )),")") # p-V beta QE
   Tab_NPvsPdays_QE[9,j]  <- round(summary(myreg)$r.squared,2) # R^2
   # add D-W statistic?
   Tab_NPvsPdays_QE[10,j]  <- formatC(abs(round(linearHypothesis(myreg,
