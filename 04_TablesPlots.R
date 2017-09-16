@@ -15,6 +15,7 @@
 OMO$Class[1] <- "NA"
 OMO$Class[c(2,3,6,8,9,10,16,18,19,20,31)] <- "Exog"
 OMO$Class[c(4,5,7,11:15,17,21:30,32,33,34)] <- "Endog"
+OMO$Class[c(4,9,29)] <- "R"
 
 # export table to latex format
 library(xtable)
@@ -60,8 +61,6 @@ mtext("QE3", side = 1, line = 0, outer = FALSE,
       at = TargetRates$Date[which(TargetRates$Date=="2012-09-13")],
       adj = NA, padj = NA, cex = 0.7, col = "darkgrey", font = NA, crt=90)
 #dev.off()
-
-# add decisions where nothing was changed for analysis?
 
 
 # Endog vs Exog Days Plots ------------------------------------------------
