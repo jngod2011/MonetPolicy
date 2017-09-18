@@ -171,10 +171,15 @@ Since this discussion covers a time period with interest rates at the ZLB and ce
 Even though this should increase the credibility of the model, the sample period is heavily affected by the events of the financial crisis and thus many of the Fed chairman announcements will have triggered market responses as stated in \textcite{Blinder.2010} even though not all of them cannot be controlled for as they are of ambiguous nature or concur with other statements and report releases and hence, their effects cannot be disentangled clearly in such a limited sample size.
 
 %
-\subsection{Model performance}
+\subsection{Performance evaluation}
 
-\begin{itemize}
-	\item  include confusion matrix/ratio for every classification algorithm
-	\item classify ES articles using the CB approach
-\end{itemize}
+In order to get an idea about the accuracy of the described classification procedures, I performed a simulation across all ML algorithms. For this purpose, I took the test set consisting of 39 endogenous and 37 exogenous articles and randomly drew 90\% of those from which I predicted the sentiment of the remaining 10\%; I calculated the accuracy measure of correctly specified articles over total articles as the fraction of the sum of the diagonal elements of the confusion matrix over the total number of articles to be classified. Repeating this procedure 500 times and taking the average accuracy as well as a few indicators about the distribution yields the values denoted in table~\vref{tab:Tab_PerfEval}.
+% Performance evaluation table
+\input{chapters/tables_graphs/Tab_PerfEval.tex}
+%
+It is obvious that svm is significantly outperformed in terms of variation and mean by the other three techniques which vary across 60\% of correctly specified articles on average while their standard deviation is around 20\%. ME seems to perform best with knn being second while having the largest standard deviation among the three top ones. Its prediction have to be scrutinized with particular care since they range from no correct prediction to 100\% correct predictions.
+
+Even though the results do indicate that most algorithms are a better choice than randomly allocating sentiment, it has to be emphasized that 90\% of the data predict the remaining 10\% and in the final task, the action set is significantly larger than the training set. Since the algorithm is trained, however, to detect the same sentiment in this evaluation and does classify many articles correctly, in some compositions even with more than 85\% for maximum entropy, I conclude that some of the learning techniques do find the right indicators for both sentiment types. The high variation in the final results as well as some clearly misspecified combinations might be due to outliers in the articles. Whenever the latter become very long and cover a variety of topics, the ML algorithms tend to misclassify them. 
+
+When it comes to the count-based approach, a comparable straight forward evaluation procedure is not at hand. Instead, I applied it to some of the articles used in \textcite{Ellingsen.2003}. Even though I could only access ten of their articles and most of those were not feasible for testing as they have been classified as unnoticed or coincided with employment report releases, the count-based approach detects the correct sentiment in about 70-80\% of the cases as far as obvious sentiment can intuitively be interpreted from the data. Even though this supports the use of this method, the WSJ column used by the authors covers a variety of topics relevant for financial markets and is thus broader than the coverage in the articles selected for this analysis. Furthermore, the idea of applying automated text mining in this exercise is to apply the function to a variety of newspaper articles in order to detect the general tendency towards the interpretation of Fed motives underlying a target change rather than focussing thoroughly on one source of information.
 %

@@ -134,6 +134,7 @@ GetCorpus <- function(OMOdate, path){
 # determine sentiment of every OMO
 
 # List of phrases  to determine classification of corpus
+library(tm)
 # Mon. policy responses to econ developments
 endog.words <- stemDocument(scan(file='data/EndogenousWords.txt', 
                                  what='character',quiet=T))
@@ -391,37 +392,137 @@ print(xtable(Tab_Class, align="llrrrrrrrrrrrrrrr", type="latex",
 
 #Tab_Class$Date                   <- as.Date(OMO$Date,"%Y-%m-%d") # right date format
 
-# Model performance -------------------------------------------------------
+# Performance evaluation -------------------------------------------------------
 
+tab_Perf_Eval <- data.frame("Naive Bayes"=NA, "Maximum entropy"=NA, "knn"=NA, "SVM"=NA)
 set.seed(40888) # loop around
-train.idx <- sample(length(tdm.class), ceiling(length(tdm.class) *0.9))
-test.idx <- (1:length(tdm.class))[- train.idx]
+test.size <- .9 # 90/10 training/test set
+nloop     <- 500 # number of repetitions
+for(k in seq(nloop)){
+  # randomly draw train and test sample
+  train.idx <- sample(length(tdm.class), ceiling(length(tdm.class) *test.size))
+  test.idx <- (1:length(tdm.class))[- train.idx]
 
-# Naive Bayes
-NB_class_PERF <- naiveBayes(as.matrix(tdm.stack.nl[train.idx,]), # test texts dtm as matrix
-                            as.factor(tdm.class[train.idx])) # test classifications
+  ## Naive Bayes
+  NB_class_PERF <- naiveBayes(as.matrix(tdm.stack.nl[train.idx,]), # test texts dtm as matrix
+                              as.factor(tdm.class[train.idx])) # test classifications
+  
+  NB_pred_PERF <- predict(NB_class_PERF, # class element
+                          tdm.stack.nl[test.idx,]) # action set 
+  
+  NB_conf.mat <- table("Predictions" = NB_pred_PERF, "Actual" = tdm.class[test.idx])
+  #NB_conf.mat
+  #(accuracy <- sum(diag(NB_conf.mat))/length(test.idx))
+  tab_Perf_Eval[k,1] <- sum(diag(NB_conf.mat))/length(test.idx)
+  
+  rm(NB_class_PERF,NB_pred_PERF,NB_conf.mat)
+  
+  ## Maximum entropy
+  
+  # Configure the training data
+  Test_container_PERF <- create_container(tdm.stack.nl[train.idx,], # train set dtm
+                                          as.numeric(as.factor(tdm.class[train.idx])),# train set classification
+                                          trainSize=seq(train.idx), # train index
+                                          virgin=FALSE)
+  # train a SVM Model
+  MEclassifier_PERF <- train_model(Test_container_PERF, "MAXENT", kernel="linear", cost=1)
+  
+  # create the corresponding prediction container
+  Act_container_PERF <- create_container(tdm.stack.nl[test.idx,], # action set dtm
+                                         labels=rep(0,length(test.idx)), # empty class
+                                         testSize=seq(test.idx),  # test index
+                                         virgin=FALSE)
+  
+  tmp_me_pred_PERF <- classify_model(Act_container_PERF, MEclassifier_PERF) # 1: endog, 2: exog
+  me_pred_PERF     <- matrix(nrow=nrow(tmp_me_pred_PERF),ncol=1)
+  for(i in 1:nrow(tmp_me_pred_PERF)){
+    if(tmp_me_pred_PERF$MAXENTROPY_LABEL[i]==1){
+      me_pred_PERF[i]    <- "Endog"
+    }
+    if(tmp_me_pred_PERF$MAXENTROPY_LABEL[i]==2){
+      me_pred_PERF[i]    <- "Exog"
+    }
+    #else{me_pred_PERF[i]    <- NA}
+  }
+  
+  me_conf.mat <- table("Predictions" = as.character(me_pred_PERF), "Actual" = tdm.class[test.idx])
+  #me_conf.mat
+  #(accuracy <- sum(diag(me_conf.mat))/length(test.idx))
+  tab_Perf_Eval[k,2] <- sum(diag(me_conf.mat))/length(test.idx)
+  
+  rm(Test_container_PERF,MEclassifier_PERF,Act_container_PERF,tmp_me_pred_PERF,me_pred_PERF,me_conf.mat)
+  
+  
+  ## knn
+  knn_pred_PERF <- knn(tdm.stack.nl[train.idx, ], tdm.stack.nl[test.idx, ], tdm.class[train.idx])
+  
+  knn_conf.mat <- table("Predictions" = knn_pred_PERF, "Actual" = tdm.class[test.idx])
+  #knn_conf.mat
+  #(accuracy <- sum(diag(knn_conf.mat))/length(test.idx))
+  tab_Perf_Eval[k,3] <- sum(diag(knn_conf.mat))/length(test.idx)
+  
+  rm(knn_pred_PERF,knn_conf.mat)
+  
+  ## svm
+  
+  # Configure the training data
+  Test_container_PERF <- create_container(tdm.stack.nl[train.idx,], # train set dtm
+                                     as.numeric(as.factor(tdm.class[train.idx])),# train set classification
+                                     trainSize=seq(train.idx), # train index
+                                     virgin=FALSE)
+  # train a SVM Model
+  SVMclassifier_PERF <- train_model(Test_container_PERF, "SVM", kernel="linear", cost=1)
+  
+  # create the corresponding prediction container
+  Act_container_PERF <- create_container(tdm.stack.nl[test.idx,], # action set dtm
+                                    labels=rep(0,length(test.idx)), # empty class
+                                    testSize=seq(test.idx),  # test index
+                                    virgin=FALSE)
+  
+  tmp_svm_pred_PERF <- classify_model(Act_container_PERF, SVMclassifier_PERF) # 1: endog, 2: exog
+  svm_pred_PERF     <- matrix(nrow=nrow(tmp_svm_pred_PERF),ncol=1)
+  for(i in 1:nrow(tmp_svm_pred_PERF)){
+    if(tmp_svm_pred_PERF$SVM_LABEL[i]==1){
+      svm_pred_PERF[i]    <- "Endog"
+    }
+    if(tmp_svm_pred_PERF$SVM_LABEL[i]==2){
+      svm_pred_PERF[i]    <- "Exog"
+    }
+    else{svm_pred_PERF[i]    <- NA}
+  }
+  
+  svm_conf.mat <- table("Predictions" = as.character(svm_pred_PERF), "Actual" = tdm.class[test.idx])
+  #svm_conf.mat
+  #(accuracy <- sum(diag(svm_conf.mat))/length(test.idx))
+  tab_Perf_Eval[k,4] <- sum(diag(svm_conf.mat))/length(test.idx)
+  
+  rm(Test_container_PERF,SVMclassifier_PERF,Act_container_PERF,tmp_svm_pred_PERF,svm_pred_PERF,svm_conf.mat)
+  
+  # delete rest
+  rm(train.idx,test.idx)
+}
 
-NB_pred_PERF <- predict(NB_class_PERF, # class element
-                        tdm.stack.nl[test.idx,]) # action set 
+# export to latex
+tab_PerfEval <- data.frame(rbind(
+                  apply(tab_Perf_Eval, MARGIN=2, FUN=mean),
+                  apply(tab_Perf_Eval, MARGIN=2, FUN=median),
+                  apply(tab_Perf_Eval, MARGIN=2, FUN=sd),
+                  apply(tab_Perf_Eval, MARGIN=2, FUN=min),
+                  apply(tab_Perf_Eval, MARGIN=2, FUN=max))
+)
+colnames(tab_PerfEval)  <- c("Naive Bayes", "Maximum entropy", "knn", "SVM")
+row.names(tab_PerfEval) <- c("Mean","Median","Std","Min","Max")
 
-NB_conf.mat <- table("Predictions" = NB_pred_PERF, "Actual" = tdm.class[test.idx])
-NB_conf.mat
-(accuracy <- sum(diag(NB_conf.mat))/length(test.idx))
+# export table to latex format
+library(xtable)
+#print(xtable(tab_PerfEval, align="lcccc", digits=c(0,4,4,4,4), 
+#             type="latex", caption = "Accuracy of ML algorithms.",
+#             label = "tab:Tab_PerfEval"), 
+#      sanitize.text.function = function(x){x}, include.rownames=T,
+#      booktabs=TRUE, caption.placement="top", #floating.environment='sidewaystable',
+#      #size="\\fontsize{8pt}{9pt}\\selectfont",
+#      file="Text/chapters/tables_graphs/Tab_PerfEval.tex")
 
-rm(NB_class_PERF,NB_pred_PERF,NB_conf.mat)
-
-# knn
-knn.pred_PERF <- knn(tdm.stack.nl[train.idx, ], tdm.stack.nl[test.idx, ], tdm.class[train.idx])
-
-knn_conf.mat <- table("Predictions" = knn.pred_PERF, "Actual" = tdm.class[test.idx])
-knn_conf.mat
-(accuracy <- sum(diag(knn_conf.mat))/length(test.idx))
-
-rm(knn_pred_PERF,knn_conf.mat)
-
-# svm
-
-rm(train.idx,test.idx)
 
 
 ####################################################
