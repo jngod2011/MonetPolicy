@@ -11,7 +11,6 @@
 # Input: OMO, Tab_Class, YieldCurves
 
 # Federal funds targets table ---------------------------------------------
-# WHICH CLASSIFICATION TO TAKE? -> eg KNN (Tab_Class$KNN); later LDA
 OMO$Class[1] <- "NA"
 OMO$Class[c(2,3,6,8,9,10,16,18,19,20,31)] <- "Exog"
 OMO$Class[c(4,5,7,11:15,17,21:30,32,33,34)] <- "Endog"
@@ -22,7 +21,7 @@ library(xtable)
 #OMO$Date<-as.character(OMO$Date) # fix date
 #print(xtable(OMO[2:nrow(OMO),], align="llcrrrrrrrrrrrrrrrr", digits=c(
 #                0,0,4,4,4,4,4,2,2,2,2,2,2,2,2,2,2,2,0), type="latex", 
-#             caption="Federal Funds target rate changes.",
+#             caption="Federal funds target rate adjustments and corresponding yield curve movements.",
 #             label = "tab:FEDfundstgt"), 
 #      sanitize.text.function = function(x){x}, include.rownames=F,
 #      booktabs=TRUE, caption.placement="top", floating.environment='sidewaystable',

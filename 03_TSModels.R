@@ -43,8 +43,9 @@ OMO                       <- read.csv(file="data/FED_OpenMarket_Operations.csv",
                                     stringsAsFactors=FALSE)
 colnames(OMO)             <- c("Date","Sched","$Tgt_{low}$", "$Tgt_{high}$", "$\\Delta_{low}$", 
                                "$\\Delta_{high}$",
-                               "1M","3M","6M","1Y","2Y","3Y","5Y","7Y","10Y","20Y",
-                               "30Y", "Class")
+                               "$\\Delta$1M","$\\Delta$3M","$\\Delta$6M","$\\Delta$1Y",
+                               "$\\Delta$2Y","$\\Delta$3Y","$\\Delta$5Y","$\\Delta$7Y",
+                               "$\\Delta$10Y","$\\Delta$20Y","$\\Delta$30Y", "Class")
 OMO$Date                   <- as.Date(OMO$Date,"%Y-%m-%d") 
 
 # fill Yield Curve Change data into OMO dates
@@ -130,6 +131,11 @@ GetCorpus <- function(OMOdate, path){
 #Corpi   <- lapply(OMOdates, GetCorpus, path=path) # takes a while
 #save(Corpi,file="Corpi_Factiva_short.RData")
 #load("Corpi_Factiva.RData")
+
+# count number of articles:
+library(stringr)
+#str_count(string = Corpi[[2]], pattern = "\\n")[2]
+sum(sapply(Corpi, FUN = function(x) str_count(string = x, pattern = "\\n")[2] + 1))
 
 # determine sentiment of every OMO
 
@@ -380,15 +386,15 @@ colnames(Tab_Class)             <- c("Date",
 
 # export table to latex format
 library(xtable)
-Tab_Class$Date<-as.character(OMO$Date) # fix date for latex export
-print(xtable(Tab_Class, align="llrrrrrrrrrrrrrrr", type="latex", 
-             digits=c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
-             caption = "Classification according to different text mining methods.",
-             label = "tab:Tab_Class"), 
-      sanitize.text.function = function(x){x}, include.rownames=F,
-      booktabs=TRUE, caption.placement="top", floating.environment='sidewaystable',
-      size="\\fontsize{8pt}{9pt}\\selectfont",
-      file="Text/chapters/tables_graphs/Tab_Class.tex")
+#Tab_Class$Date <-as.character(OMO$Date) # fix date for latex export
+#print(xtable(Tab_Class, align="llrrrrrrrrrrrrrrr", type="latex", 
+#             digits=c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
+#             caption = "Target adjustment dates with corresponding number of as endogenous and exogenous classified articles through different text mining procedures.",
+#             label = "tab:Tab_Class"),
+#      sanitize.text.function = function(x){x}, include.rownames=F,
+#      booktabs=TRUE, caption.placement="top", floating.environment='sidewaystable',
+#      size="\\fontsize{8pt}{9pt}\\selectfont",
+#      file="Text/chapters/tables_graphs/Tab_Class.tex")
 
 #Tab_Class$Date                   <- as.Date(OMO$Date,"%Y-%m-%d") # right date format
 
@@ -502,6 +508,9 @@ for(k in seq(nloop)){
   rm(train.idx,test.idx)
 }
 
+#save(tab_Perf_Eval,file="tab_Perf_Eval.RData")
+#load("tab_Perf_Eval.RData")
+
 # export to latex
 tab_PerfEval <- data.frame(rbind(
                   apply(tab_Perf_Eval, MARGIN=2, FUN=mean),
@@ -516,8 +525,8 @@ row.names(tab_PerfEval) <- c("Mean","Median","Std","Min","Max")
 # export table to latex format
 library(xtable)
 #print(xtable(tab_PerfEval, align="lcccc", digits=c(0,4,4,4,4), 
-#             type="latex", caption = "Accuracy of ML algorithms.",
-#             label = "tab:Tab_PerfEval"), 
+#             type="latex", caption = "Simulated accuracy of different ML algorithms.",
+#             label = "tab:Tab_PerfEval"),
 #      sanitize.text.function = function(x){x}, include.rownames=T,
 #      booktabs=TRUE, caption.placement="top", #floating.environment='sidewaystable',
 #      #size="\\fontsize{8pt}{9pt}\\selectfont",
