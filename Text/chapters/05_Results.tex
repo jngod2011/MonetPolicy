@@ -2,20 +2,18 @@
 % % % % % % 			  Results  			% % % % % % % %
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %	
 
-As presented in \textcite{Ellingsen.2003}, short term market rates have a close relationship with the target rate while the yield on long-term bonds behaviour tends to be ambiguous. Where, as commonly explained through arbitrage arguments, long rates should be linked to short-term rates, a tilt of the yield curve has been observed in numerous occasions, possibly due to a change in inflation expectations. The model proposed in \textcite{Ellingsen.2001} implements this feature through the perceive underlying reason for a monetary authority's decision to adjust the target rate. This implies that it is either because of new information about the economy (endogenous) or a change in the preferences towards the trade-off between inflation and unemployment (exogenous).
+As presented in \textcite{Ellingsen.2003}, short term market rates have a close relationship with the target rate while the yield on long-term bonds behaviour tends to be ambiguous. While, as commonly explained through arbitrage arguments, long rates should be linked to short-term rates, a tilt of the yield curve has been observed in numerous occasions, possibly due to a change in inflation expectations. The model proposed in \textcite{Ellingsen.2001} implements this feature through the perceived underlying reason for a monetary authority's decision to adjust the target rate. This implies that it is either because of new information about the economy (endogenous) or a change in the preferences towards the trade-off between inflation and unemployment (exogenous).
 
 \subsection{Policy versus non-policy days}
 
 The first test of \textcite{Ellingsen.2003} addresses hypothesis~\ref{H:1} and thus, whether long and short rates have a different relationship on days when the target rate was adjusted by the Fed. I follow them by defining a policy day to be any event when the monetary authority changed the target rate and count all other days as non-policy days; this includes those days on which the FOMC met and did not adjust the target rate. Even though no action can be considered as policy innovation, the FOMC meetings take place regularly and between 2009 and 2015 there was not a single adjustment, as announced, while meetings took place. For the purpose of coherence, hence, all FOMC meetings without target rate adjustment are treated as standard non-policy days. 
 
-Using regression~\eqref{eq:PvsNP} on the dataset separated into 4007 non-policy days and 30 policy days supports the findings of \textcite{Ellingsen.2003} as shown in table~\vref{tab:NPvsPdays}; the remaining three are treated as non-policy days since major economic reports have been published on the same day the target rate was adjusted. Since all changes in policy were discussed in the press, I refrain from excluding policy days due to them being unnoticed by markets.
+Using regression~\eqref{eq:PvsNP} on the dataset separated into 4007 non-policy days and 30 policy days supports the findings of \textcite{Ellingsen.2003} as shown in table~\vref{tab:NPvsPdays}; the remaining three are treated as non-policy days since major economic reports have been published on the same day the target rate was adjusted. Since all changes in policy were discussed in the press, I refrain from excluding policy days due to them being unnoticed by markets. Since a Breusch-Pagan test on the residuals revealed heteroskedasticity for maturities of up to 10 years, robust standard errors have been reported in these cases.
 % classic Ellingsen/Söderström
 % Non-policy vs policy days
 \input{chapters/tables_graphs/NPvsPdays.tex}
 %
-While for the shorter maturities the relationship with the three month rate is even bigger for policy days, maturities of three years and more is considerably weaker and even approaches zero for ten years and more; for non-policy days the coefficient is still significantly positive. Controlling for the QE efforts of the Fed does not change the results as can be seen in table~\vref{tab:NPvsPdays_QE} of the appendix.
-% QE control table here?
-This is an indication that policy moves reveal information about the monetary authority's preferences.
+While for the shorter maturities the relationship with the three month rate is even bigger for policy days, maturities of two years and more is considerably weaker and even approaches zero for above ten years; mainly due to insignificant coefficients. For non-policy days the coefficient is still significantly positive. Controlling for the QE efforts of the Fed does not change the results as can be seen in table~\vref{tab:NPvsPdays_QE} of the appendix. This is an indication that policy days reveal information about the monetary authority's preferences as $\beta_n^{P}$ decays much faster with $n$ than $\beta_n^{NP}$ and both coefficients statistically differ and thus inherit different information for higher maturities.
 
 \subsection{Classification of target rate adjustments}
 
@@ -23,7 +21,7 @@ In order top find evidence for hypotheses~\ref{H:2} through \ref{H:4}, the sampl
 % ClassPolEvents 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.6\textwidth]{chapters/tables_graphs/ClassPolEvents.pdf} 
+	\includegraphics[width=0.5\textwidth]{chapters/tables_graphs/ClassPolEvents.pdf} 
 	\caption[Response of the 10-year interest rate to a change in the 3-month rate for all classified policy events.]{Response of the 10-year interest rate to a change in the 3-month rate for all classified policy events; \textit{source:} own depiction based on \textcite{Ellingsen.2003}.}
 	\label{fig:ClassPolEvents}
 \end{figure}
@@ -32,7 +30,7 @@ Since the 3-month rate is used as proxy for the policy innovation, it can thus b
 % EndPolEvents
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.6\textwidth]{chapters/tables_graphs/EndPolEvents.pdf} 
+	\includegraphics[width=0.5\textwidth]{chapters/tables_graphs/EndPolEvents.pdf} 
 	\caption[Response of the 10-year interest rate to a change in the 3-month rate for endogenous policy events.]{Response of the 10-year interest rate to a change in the 3-month rate for endogenous policy events; \textit{source:} own depiction based on \textcite{Ellingsen.2003}.}
 	\label{fig:EndPolEvents}
 \end{figure}
@@ -41,26 +39,23 @@ Here, the relationship is obviously positive while for figure~\vref{fig:ExPolEve
 % ExPolEvents
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.6\textwidth]{chapters/tables_graphs/ExPolEvents.pdf} 
+	\includegraphics[width=0.5\textwidth]{chapters/tables_graphs/ExPolEvents.pdf} 
 	\caption[Response of the 10-year interest rate to a change in the 3-month rate for exogenous policy events]{Response of the 10-year interest rate to a change in the 3-month rate for exogenous policy events; \textit{source:} own depiction based on \textcite{Ellingsen.2003}.}
 	\label{fig:ExPolEvents}
 \end{figure}
 %
-Even though \textcite{Ellingsen.2003} have more observations and variation in both rates, they do not find a clear sign of their correlation for exogenous policy days which supports their theoretical predictions as well as the findings in this sample . 
+Even though \textcite{Ellingsen.2003} have more observations and variation in both rates, they do not find a clear sign of their correlation for exogenous policy days which supports their theoretical predictions as well as the findings in this sample. 
 
 % REGRESSION RESULTS
-For a statistically more sound procedure, regression~\eqref{eq:EndvsEx} has been estimated in order to test the authors' hypotheses. Table~\vref{tab:EndogvsExogdays} lists the estimated parameters as well as their corresponding \textit{p}-values in parentheses underneath.
+For a statistically more sound procedure, regression~\eqref{eq:EndvsEx} with robust standard errors for maturities up to 10 years has been estimated in order to test the authors' hypotheses. Table~\vref{tab:EndogvsExogdays} lists the estimated parameters alongside their corresponding \textit{p}-values in parentheses underneath.
 % Endog vs Exog table
 \input{chapters/tables_graphs/EndogvsExogdays.tex}
 %
-While the coefficient for non-policy days is highly significant and decreasing with $n$, $\beta_n^{End}$ is not significantly different from zero for higher maturities; this is even more pronounced for $\beta_n^{Ex}$. Given the high number of non-policy days and very limited sample of classified policy days, this is not surprising. Nevertheless, hypothesis~\ref{H:2}, which states that long-term interest rates positively correlate to endogenous policy moves but respond negatively to exogenous ones, cannot be answered with certainty since neither coefficient is statistically significant from zero. Even though it appears to hard to justify the tilt of the yield curve through exogenous policy moves due to the corresponding positive coefficients, this might be traced back to the lack of sufficient variation in yield curve changes after exogenous and endogenous policy moves on top of the limited amount of them in the sample. 
+While the coefficient for non-policy days is highly significant and decreasing with $n$, $\beta_n^{End}$ is not significantly different from zero for higher maturities; this is even more pronounced for $\beta_n^{Ex}$. Given the high number of non-policy days and very limited sample of classified policy days, this is not surprising. Nevertheless, hypothesis~\ref{H:2}, which states that long-term interest rates positively correlate to endogenous policy moves but respond negatively to exogenous ones, cannot be answered with certainty since neither coefficient is statistically significant from zero. Even though it appears hard to justify the tilt of the yield curve through exogenous policy moves due to the corresponding positive coefficients, this might be traced back to the lack of sufficient variation in yield curve changes after exogenous and endogenous policy moves on top of the limited amount of them in the sample. Furthermore, since not even the sign of higher maturity coefficients is according to theory, a different type of conduct of monetary policy than in earlier periods might be a reason that the findings of \textcite{Ellingsen.2003} could not be replicated. As discussed in section~\ref{sec:Lit}, the aftermath of the financial crisis has been accompanied by very transparent monetary policy with the Fed engaging in clear forward guidance in order to calm markets and re-establish trust among financial institutes. Hence, the QE announcements as well as major interest rate adjustments were well anticipated which might have affected significance of the respective coefficients.
 
-For hypothesis~\ref{H:3}, which states that all interest rates behave similarly and positive to information on non-policy days as well as endogenous policy days, I come to the same conclusion as \textcite{Ellingsen.2003}; a statistical test for equality of parameters clearly rejects it for maturities larger than one year. Equality is also rejected for the comparison of coefficients for endogenous and exogenous policy days. The final prediction of the model in \textcite{Ellingsen.2001} is that for all maturities, the magnitude of the effect after a non-policy day or endogenous policy day falls with maturity as expressed in hypothesis~\ref{H:4}. This result can be replicated on our sample even though significance of parameters is low for higher maturities. 
+For hypothesis~\ref{H:3}, which states that all interest rates behave similarly and positive to information on non-policy days as well as endogenous policy days, I come to the same conclusion as \textcite{Ellingsen.2003}; a statistical test for equality of parameters clearly rejects it for maturities larger than one year. Equality is also rejected for the comparison of coefficients for endogenous and exogenous policy days. The final prediction of the model in \textcite{Ellingsen.2001} is that for all maturities, the magnitude of the effect after a non-policy day or endogenous policy day falls with maturity as expressed in hypothesis~\ref{H:4}. This result can be replicated in our sample even though significance of parameters is low for higher maturities. 
 % QE control table results
-Including announcements of unconventional monetary policy action into the regression does not change the results as reported in table~\vref{tab:EndogvsExogdays_QE} in the appendix. One reason for the insignificant QE dummies might be that most of these decisions where well expected as they have been addressed in previous FOMC meetings and hence already priced in before the actual decision. 
+Including announcements of unconventional monetary policy actions into the regression does not change the results as reported in table~\vref{tab:EndogvsExogdays_QE} in the appendix. One reason for the insignificant QE dummies might be that most of these decisions where well expected as they have been addressed in previous FOMC meetings and hence already priced in before the actual decision. 
 
 I refrain from including adjusted estimates as well as a sensitivity analysis as conducted by \textcite{Ellingsen.2003} since the aim of this paper is to suggest an alternative classification procedure rather than an in depth assessment of the economic model introduced in \textcite{Ellingsen.2001}.
-
-%\subsection{Technique evaluation}
-
-%\dots % table with percentage of correct predictions in training set from confusion matrix
+%
