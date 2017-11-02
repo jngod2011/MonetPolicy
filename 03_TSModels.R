@@ -235,6 +235,8 @@ library(e1071)
 NaiBayclassifier <- naiveBayes(as.matrix(tdm.stack.nl[seq(tdm.class),]), # test texts dtm as matrix
                                as.factor(tdm.class)) # test classifications
 
+#head(NaiBayclassifier$tables)
+
 NaiBay.pred <- predict(NaiBayclassifier, # class element
                        tdm.stack.nl[seq(nrow(tdm.stack.nl))[-seq(tdm.class)],]) # action set 
 
