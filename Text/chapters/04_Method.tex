@@ -116,7 +116,7 @@ Finally, support vector machines (svm) perform well, according to \textcite[p.~2
 \subsubsection{Classification and term structure of interest rates}
 
 % Write why when which algo has been preferred (ES have this residuum thing for endog)
-All ML algorithms utilised in order to determine the sentiment distinction are performed through the standard functions in the \textit{R} software package; their classifications are listed in table~\vref{tab:Tab_Class}. 
+All ML algorithms utilised in order to determine the sentiment distinction are performed through the standard functions in the \textit{R} software package; their classifications are listed in table~\vref{tab:Tab_Class}. Due to the low dimensionality of terms in the dtm, linear kernels have been chosen for ME and SVM.
 % Reports: https://www.bls.gov/schedule/2008/home.htm
 In accordance with \textcite{Ellingsen.2003}, all dates that inherit another important economic release by the Bureau of Labor Statistics such as the employment report, have been excluded from the sample and marked as \textit{R} while those changes that have not been noticed by markets are indicated with a \textit{U}. The information about relevant economic releases was taken from \textcite{BoLS.2017}.
 %
@@ -128,9 +128,20 @@ In accordance with \textcite{Ellingsen.2003}, all dates that inherit another imp
 %
 % NB
 %
-Using a NB classifier to predict articles from the action set shows that the class distribution for endogenous/exogenous training articles is 39/37\footnote{The difference to the initial training set stems from the fact that the algorithm omits table entries for attributes with missing values. Since some of the short snippets from the training set can thus not be used, there are four endogenous and one exogenous text snippets missing from the initial 81.}. As output, the classifier displays a table for each of the 9,016 predictor terms which states the conditional probability given the target class for each attribute level. % maybe determine how endog/exog is chosen here then
+Using a NB classifier to predict articles from the action set shows that the class distribution for endogenous/exogenous training articles is 39/37\footnote{The difference to the initial training set stems from the fact that the algorithm omits table entries for attributes with missing values. Since some of the short snippets from the training set can thus not be used, there are four endogenous and one exogenous text snippets missing from the initial 81.}. As output, the classifier displays a table for each of the 9,016 predictor terms which states the conditional probability given the target class for each attribute level. In a consecutive step, predictions are made based on these conditional probabilities through the terms in every article to classify which yields only none to two exogenous articles and thus, NB classifies all events as endogenous. 
 %
 % ME
+%
+The ME classifier, on the other hand, directly predicts the sentiment along with its corresponding probability based on the trained model. Comparing the absolute number of classified articles and simply selecting the one with the higher amount yields six endogenous, 27 exogenous and one ambiguous target rate adjustment. 
+%
+% KNN
+%
+Similarly, knn directly outputs the classification of each article based on the most likely affiliation due to terms in its immediate proximity. Taking a simple majority vote, knn classifies two dates as endogenous and 32 as exogenous; compared to ME, there are less close calls. 
+%
+% SVM
+%
+SVM, finally, yields direct classifications with corresponding probabilities based on a logistic distribution using maximum likelihood. In contrast to ME which estimates the empirical probability distribution, SVM probabilities range from $.50$ to $.95$ with a $.75$-quantile of $.55$ while ME probabilities lie between $.51$ and $1.00$ with median close to one. Even though SVM classifies up to 18 articles as exogenous, apart from one occasion which could not unambiguously be classified all dates were determined to be endogenous.
+
 %
 It is obvious that the NB model strongly prefers the endogenous classification while knn determines most decisions to be exogenous. ME and SVM appear to be slightly more attentive towards the sentiment in the articles but come to different conclusions as well. Even though the ML learning methods come with a classification certainty\footnote{I chose not to include the probabilities for every article classification by method for purposes of readability. Furthermore, since results diverge this strong, they do not add significant value or credibility to the respective results.}, it is apparent that the endogeneity/exogeneity assignment is too much of a specialised task as it builds upon very detailed formulations in the texts for which the training sample is too small, in particular for such an extensive action set. As the count-based algorithm includes a significance test across articles for every adjustment date, I base the selection for the final classification on the latter and refer to the most promising of the ML techniques whenever CB returns an ambiguous classification and at least one of the other algorithms shows a clear tendency towards one sentiment; the list of OMOs with corresponding classification is outlined in table~\vref{tab:FEDfundstgt}. % more detail here?
 
