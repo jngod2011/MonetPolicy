@@ -59,6 +59,8 @@ mtext("Twist", side = 1, line = 0, outer = FALSE,
 mtext("QE3", side = 1, line = 0, outer = FALSE, 
       at = TargetRates$Date[which(TargetRates$Date=="2012-09-13")],
       adj = NA, padj = NA, cex = 0.7, col = "darkgrey", font = NA, crt=90)
+legend("toprigh", legend=c("Daily US treasury 1M rate", "Federal Funds target rate (range)"),
+       col=c("orange", "cornflowerblue"), lty=1:2, cex=0.8, bg = "white")
 #dev.off()
 
 
