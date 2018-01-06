@@ -513,6 +513,151 @@ library(xtable)
 
 
 
+# Policy Days vs Normal Days until EoY 2018 -------------------------------
+
+DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
+                               diff(as.matrix(YieldCurves[,2:ncol(YieldCurves)])),NA,NA)
+colnames(DeltaYieldCurves) <- c("Date","d1M","d3M","d6M","d1Y","d2Y","d3Y","d5Y","d7Y",
+                                "d10Y","d20Y","d30Y","NP","P")
+# discard post-crisis period
+DeltaYieldCurves_short <- DeltaYieldCurves[1:which(DeltaYieldCurves[,1]=="2008-12-31"),]
+
+for(i in 1:nrow(DeltaYieldCurves_short)){
+  if(length(which(OMO[,1]==DeltaYieldCurves_short[i,1])) == 0)
+    DeltaYieldCurves_short[i,ncol(DeltaYieldCurves_short)]  <- 0
+  else
+    DeltaYieldCurves_short[i,ncol(DeltaYieldCurves_short)]  <- 1
+}
+DeltaYieldCurves_short[,ncol(DeltaYieldCurves_short)-1]  <- 1-DeltaYieldCurves_short[,ncol(DeltaYieldCurves_short)]
+
+# replicate Non-policy vs policy day regression table from ES, p. 10
+Tab_NPvsPdays_short <- matrix(nrow=10-1-1,ncol=10)
+library(car)
+Tab_NPvsPdays_short[,1] <- c("$\\alpha_n$", "", "$\\beta_n^{NP}$", "", "$\\beta_n^P$", "",
+                       "$\\bar{R}^2$","$\\beta_n^{NP}$ = $\\beta_n^P$")
+colnames(Tab_NPvsPdays_short) <- c(" ","6m","1y","2y","3y","5y","7y","10y","20y","30y")
+
+# heteroskedastic standard errors for all maturities
+for(k in 4:(ncol(DeltaYieldCurves_short)-2)){
+  # regress change in n-maturity on NP-dummy*delta3m and P-dummy*delta3m    
+  myreg <- lm(DeltaYieldCurves_short[,k]~DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$NP + 
+                DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$P)
+  #  print(bptest(myreg))
+  #  print(ncvTest(myreg))  
+  # fill table
+  j = k+1-3 
+  Tab_NPvsPdays_short[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
+  Tab_NPvsPdays_short[2,j]  <- paste0("(", format(unlist(formatC(abs(round(coeftest(myreg, vcov. = vcovHC)[1,4],2)),format="f",digits=2))),")") # p-V intercept
+  #paste0("(", format(unlist(formatC(abs(round(summary(myreg)$coef[1,4],2)),format="f",digits=2))),")") # p-V intercept
+  Tab_NPvsPdays_short[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
+  Tab_NPvsPdays_short[4,j]  <- paste0("(", format(unlist(formatC(abs(round(coeftest(myreg, vcov. = vcovHC)[2,4],2)),format="f",digits=2))),")") # p-V intercept
+  #paste0("(", format(unlist(formatC(abs(round(summary(myreg)$coef[2,4],2)),format="f",digits=2))),")") # p-V beta NP
+  Tab_NPvsPdays_short[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta P
+  Tab_NPvsPdays_short[6,j]  <- paste0("(", format(unlist(formatC(abs(round(coeftest(myreg, vcov. = vcovHC)[3,4],2)),format="f",digits=2))),")") # p-V intercept
+  #paste0("(", format(unlist(formatC(abs(round(summary(myreg)$coef[3,4],2)),format="f",digits=2))),")") # p-V beta P
+  Tab_NPvsPdays_short[7,j]  <- round(summary(myreg)$r.squared,2) # R^2
+  # add D-W statistic?
+  Tab_NPvsPdays_short[8,j]  <- formatC(abs(round(linearHypothesis(myreg,"DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$NP=DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$P")$Pr[2],2)),format="f",digits=2)
+}
+
+# export table to latex format
+library(xtable)
+#print(xtable(Tab_NPvsPdays_short, align="lrrrrrrrrrr", digits=2, type="latex", 
+#             caption="Regression results for yield curve response to short rate movements on policy days and non-policy days before the period of ZIRP.",
+#             label = "tab:NPvsPdays_short"), 
+#      sanitize.text.function = function(x){x}, include.rownames=F,
+#      booktabs=TRUE, caption.placement="top", size="\\small",
+#      file="Text/chapters/tables_graphs/NPvsPdays_short.tex")
+
+
+
+# Exog vs Endog until EoY 2018 --------------------------------------------
+
+# yield curve regressor
+DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
+                               diff(as.matrix(YieldCurves[,2:ncol(YieldCurves)])),NA,NA,NA)
+colnames(DeltaYieldCurves) <- c("Date","d1M","d3M","d6M","d1Y","d2Y","d3Y","d5Y","d7Y",
+                                "d10Y","d20Y","d30Y", "NP", "End","Ex")
+
+DeltaYieldCurves[,ncol(DeltaYieldCurves)-1]  <- 1-DeltaYieldCurves[,ncol(DeltaYieldCurves)]
+
+# fill in end or ex classification into regressor table
+for(i in 1:nrow(DeltaYieldCurves)){
+  if(length(which(OMO$Date==DeltaYieldCurves$Date[i])) == 0){
+    DeltaYieldCurves$NP[i]    <- 1
+    DeltaYieldCurves$End[i]   <- 0
+    DeltaYieldCurves$Ex[i]    <- 0
+  }
+  else{
+    if(OMO$Class[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Endog"){
+      DeltaYieldCurves$NP[i]    <- 0
+      DeltaYieldCurves$End[i]   <- 1
+      DeltaYieldCurves$Ex[i]    <- 0
+    }
+    if(OMO$Class[which(OMO$Date==DeltaYieldCurves$Date[i])]=="Exog"){
+      DeltaYieldCurves$NP[i]    <- 0      
+      DeltaYieldCurves$End[i]   <- 0
+      DeltaYieldCurves$Ex[i]    <- 1
+    }
+  }
+}
+
+# discard post-crisis period
+DeltaYieldCurves_short <- DeltaYieldCurves[1:which(DeltaYieldCurves[,1]=="2008-12-31"),]
+
+# replicate endog vs exog day regression table from ES, p. 18
+Tab_EndvsExdays_short  <- matrix(nrow=14-1-1-1,ncol=10)
+library(car)
+Tab_EndvsExdays_short[,1] <- c("$\\alpha_n$", "", "$\\beta_n^{NP}$", "", "$\\beta_n^{End}$", "",
+                         "$\\beta_n^{Ex}$", "", "$\\bar{R}^2$", 
+                         "$\\beta_n^{NP}$ = $\\beta_n^{End}$", "$\\beta_n^{End}$ = $\\beta_n^{Ex}$")
+colnames(Tab_EndvsExdays_short) <- c(" ","6m","1y","2y","3y","5y","7y","10y","20y","30y")
+
+library(lmtest)
+library(sandwich)
+
+# heteroskedastic standard errors for all maturities
+for(k in 4:(ncol(DeltaYieldCurves_short)-3)){
+  # regress change in n-maturity on NP-dummy*delta3m + End-dummy*delta3m + Ex-dummy*delta3m
+  myreg <- lm(DeltaYieldCurves_short[,k]~DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$NP + 
+                DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$End+
+                DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$Ex)
+  #  print(bptest(myreg))
+  #  print(ncvTest(myreg))
+  # fill table
+  j = k+1-3 
+  Tab_EndvsExdays_short[1,j]  <- formatC(abs(round(summary(myreg)$coef[1,1],2)),format="f",digits=2) # intercept
+  Tab_EndvsExdays_short[2,j]  <- paste0("(", format(unlist(formatC(abs(round(coeftest(myreg, vcov. = vcovHC)[1,4],2)),format="f",digits=2))),")")
+  #  paste0("(", format(unlist(formatC(abs(round(summary(myreg)$coef[1,4],2)),format="f",digits=2))),")") # p-V intercept
+  Tab_EndvsExdays_short[3,j]  <- round(summary(myreg)$coef[2,1],2) # beta NP
+  Tab_EndvsExdays_short[4,j]  <- paste0("(", format(unlist(formatC(abs(round(coeftest(myreg, vcov. = vcovHC)[2,4],2)),format="f",digits=2))),")")
+  #paste0("(", format(unlist(formatC(abs(round(summary(myreg)$coef[2,4],2)),format="f",digits=2))),")") # p-V beta NP
+  Tab_EndvsExdays_short[5,j]  <- round(summary(myreg)$coef[3,1],2) # beta End
+  Tab_EndvsExdays_short[6,j]  <- paste0("(", format(unlist(formatC(abs(round(coeftest(myreg, vcov. = vcovHC)[3,4],2)),format="f",digits=2))),")")
+  #paste0("(", format(unlist(formatC(abs(round(summary(myreg)$coef[3,4],2)),format="f",digits=2))),")") # p-V beta End
+  Tab_EndvsExdays_short[7,j]  <- round(summary(myreg)$coef[4,1],2) # beta Ex
+  Tab_EndvsExdays_short[8,j]  <- paste0("(", format(unlist(formatC(abs(round(coeftest(myreg, vcov. = vcovHC)[4,4],2)),format="f",digits=2))),")")
+  #paste0("(", format(unlist(formatC(abs(round(summary(myreg)$coef[4,4],2)),format="f",digits=2))),")") # p-V beta Ex
+  Tab_EndvsExdays_short[9,j]  <- round(summary(myreg)$r.squared,2) # R^2
+  # add D-W statistic?
+  Tab_EndvsExdays_short[10,j]  <- formatC(abs(round(linearHypothesis(myreg, # test equality param NP & End
+                                                               "DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$NP=DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$End")$Pr[2
+                                                                                                                                                        ],2)),format="f",digits=2)
+  Tab_EndvsExdays_short[11,j]  <- formatC(abs(round(linearHypothesis(myreg, # test equality param End & Ex
+                                                               "DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$End=DeltaYieldCurves_short$d3M:DeltaYieldCurves_short$Ex")$Pr[2
+                                                                                                                                                        ],2)),format="f",digits=2)
+}
+
+# export table to latex format
+library(xtable)
+#print(xtable(Tab_EndvsExdays_short, align="lrrrrrrrrrr", digits=2, type="latex", 
+#             caption="Regression results for yield curve response to short rate movements on classified policy days before the period of ZIRP.",
+#             label = "tab:EndogvsExogdays_short"), 
+#      sanitize.text.function = function(x){x}, include.rownames=F,
+#      booktabs=TRUE, caption.placement="top", size="\\small",
+#      file="Text/chapters/tables_graphs/EndogvsExogdays_short.tex")
+
+
 ####################################################
 ##                      END                       ##
 ####################################################
