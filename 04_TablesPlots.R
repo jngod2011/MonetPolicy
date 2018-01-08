@@ -513,14 +513,14 @@ library(xtable)
 
 
 
-# Policy Days vs Normal Days until EoY 2018 -------------------------------
+# Policy Days vs Normal Days until EoY 2007 -------------------------------
 
 DeltaYieldCurves <- data.frame(YieldCurves[2:nrow(YieldCurves),1], 
                                diff(as.matrix(YieldCurves[,2:ncol(YieldCurves)])),NA,NA)
 colnames(DeltaYieldCurves) <- c("Date","d1M","d3M","d6M","d1Y","d2Y","d3Y","d5Y","d7Y",
                                 "d10Y","d20Y","d30Y","NP","P")
 # discard post-crisis period
-DeltaYieldCurves_short <- DeltaYieldCurves[1:which(DeltaYieldCurves[,1]=="2008-12-31"),]
+DeltaYieldCurves_short <- DeltaYieldCurves[1:which(DeltaYieldCurves[,1]=="2007-12-31"),]
 
 for(i in 1:nrow(DeltaYieldCurves_short)){
   if(length(which(OMO[,1]==DeltaYieldCurves_short[i,1])) == 0)
@@ -603,7 +603,7 @@ for(i in 1:nrow(DeltaYieldCurves)){
 }
 
 # discard post-crisis period
-DeltaYieldCurves_short <- DeltaYieldCurves[1:which(DeltaYieldCurves[,1]=="2008-12-31"),]
+DeltaYieldCurves_short <- DeltaYieldCurves[1:which(DeltaYieldCurves[,1]=="2007-12-31"),]
 
 # replicate endog vs exog day regression table from ES, p. 18
 Tab_EndvsExdays_short  <- matrix(nrow=14-1-1-1,ncol=10)

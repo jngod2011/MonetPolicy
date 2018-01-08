@@ -141,7 +141,7 @@ Similarly, knn directly outputs the classification of each article based on the 
 %
 % SVM
 %
-SVM, finally, yields direct classifications with corresponding probabilities based on a logistic distribution using maximum likelihood. In contrast to ME which estimates the data's empirical probability distribution, SVM probabilities range from $.50$ to $.95$ with a $.75$-quantile of $.55$ while ME probabilities lie between $.51$ and $1.00$ with median close to one. Even though SVM appears to be more sensitive to the sentiment in the articles, 30 events are classified as endogenous while only three are determined to be exogenous.
+SVM, finally, yields direct classifications with corresponding probabilities based on a logistic distribution using maximum likelihood. In contrast to ME which estimates the data's empirical probability distribution, SVM probabilities range from $.50$ to $.95$ with a $.75$-quantile of $.55$ while ME probabilities lie between $.51$ and $1.00$ with median close to one. Even though SVM appears to be more sensitive to the sentiment in the articles, 31 events are classified as endogenous while only three are determined to be exogenous.
 
 %
 It is obvious that the NB model strongly prefers the endogenous classification while knn determines most decisions to be exogenous. ME and SVM appear to be slightly more attentive towards the sentiment in the articles but come to different conclusions as well. Even though the ML learning methods come with a classification certainty\footnote{I chose not to include the probabilities for every article classification by method for purposes of readability. Furthermore, since results diverge this strong, they do not add significant value or credibility to the respective results.}, it is apparent that the endogeneity/exogeneity assignment is too much of a specialised task as it builds upon very detailed formulations in the texts for which the training sample is too small, in particular for such an extensive action set. As the count-based algorithm includes a significance test across articles for every adjustment date, I base the selection for the final classification on the latter and refer to the most promising of the ML techniques whenever CB returns an ambiguous classification and at least one of the other algorithms shows a clear tendency towards one sentiment; the list of OMOs with corresponding classification is outlined in table~\vref{tab:FEDfundstgt}. % more detail here?
@@ -178,7 +178,7 @@ Based on their classification, \textcite{Ellingsen.2003} run two regressions to 
 	\Delta i_t^n = \alpha_n + (\beta_n^{NP}d_t^{NP}+\beta_n^{P}d_t^{P})\Delta i_t^{3m}+\nu_t^n
 \end{equation}
 %
-where $\Delta i_t$ describes the change in the interest rate on day $t$ and its respective subscript denotes its maturity; $d_t$ are dummy variables for policy ($P$) and non-policy ($NP$) days and $\nu_t^n$ is the standard idiosyncratic error. Hereby, they try to find evidence for their first hypothesis 
+where $\Delta i_t$ describes the change in the interest rate on day $t$ and its respective superscript denotes its maturity; $d_t$ are dummy variables for policy ($P$) and non-policy ($NP$) days and $\nu_t^n$ is the standard idiosyncratic error. Hereby, they try to find evidence for their first hypothesis 
 %
 \begin{hypothesis}
 	\label{H:1}
